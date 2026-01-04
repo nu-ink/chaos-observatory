@@ -1,0 +1,50 @@
+# Chaos-Observatory source registry (v1)
+# Text-only ingestion. Public RSS feeds only.
+
+version: 1
+
+defaults:
+  enabled: true
+  fetch_timeout_sec: 20
+  user_agent: "Chaos-Observatory/0.1 (+https://example.invalid)"
+  max_items_per_feed: 50
+
+sources:
+  - id: bbc_world
+    label: "BBC News - World"
+    kind: rss
+    region: global
+    category: news.agency
+    enabled: true
+    feeds:
+      - url: "https://feeds.bbci.co.uk/news/world/rss.xml"
+
+  - id: fed_press
+    label: "US Federal Reserve - Press Releases"
+    kind: rss
+    region: usa
+    category: financial.central_bank
+    enabled: true
+    # Tip: the Fed maintains many feeds; start with press releases.
+    feeds:
+      - url: "https://www.federalreserve.gov/feeds/press_all.xml"
+
+  - id: ecb_press
+    label: "European Central Bank - Press Releases"
+    kind: rss
+    region: europe
+    category: financial.central_bank
+    enabled: true
+    # ECB provides multiple RSS feeds; this is commonly used for press releases.
+    feeds:
+      - url: "https://www.ecb.europa.eu/rss/press.html"
+
+  - id: reliefweb_updates
+    label: "ReliefWeb - Updates"
+    kind: rss
+    region: global
+    category: humanitarian
+    enabled: true
+    # ReliefWeb supports RSS subscriptions; this is a solid early-warning source.
+    feeds:
+      - url: "https://reliefweb.int/rss/updates.xml"

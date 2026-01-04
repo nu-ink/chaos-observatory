@@ -1,0 +1,134 @@
+# Chaos-Observatory configuration (v1)
+# Single source of truth for paths, windows, thresholds, and scheduling-friendly settings.
+
+version: 1
+project:
+  name: "chaos-observatory"
+  timezone: "UTC"
+  owner: "Keystone"
+  mode: "text-only"
+  notes: "Observational system; no prediction claims. Preserve raw text for audit."
+
+paths:
+  # Base storage directories (relative paths are ok if running from repo root)
+  data_raw: "data/raw"
+  data_normalized: "data/normalized"
+  reports: "reports"
+  archive: null   # e.g. "/mnt/archive/chaos-observatory" (null = disabled)
+
+ingest:
+  sources_file: "ingest/sources.yaml"
+  user_agent: "Chaos-Observatory/0.1"
+  fetch_timeout_sec: 20
+  max_items_per_feed: 50
+  sleep_between_feeds_sec: 0.5
+
+normalize:
+  # Normalization settings (we can expand later)
+  keep_raw_in_normalized: true
+  min_text_length: 0
+
+hold:
+  # Retention policy:
+  # - hold_days: protect most recent window for analysis (never delete/archive)
+  # - keep_days: keep this many days on disk; older is delete or archive
+  retention:
+    hold_days: 7
+    keep_days: 30
+    apply: false          # safety default; set true only when you're ready
+    only: "both"          # raw|normalized|both
+
+analyze:
+  global:
+    # Default analysis windows (UTC day partitions)
+    window_days: 7
+    baseline_days: 7
+
+  tokenization:
+    min_token_len: 3
+    ngrams: "1,2"         # used by drift & silence
+    stopwords: "builtin"  # builtin|custom
+    custom_stopwords_file: null
+
+  frequency_drift:
+    enabled: true
+    min_docs: 10
+    min_cur: 8
+    min_df: 3
+    top: 40
+    smooth: 0.5
+    per_source: false
+    md_out: null
+
+  topic_convergence:
+    enabled: true
+    group_by: "region"      # region|source
+    min_docs_per_group: 10
+    max_groups: 25
+    top_terms_per_group: 25
+    min_term_coverage: 3
+    ngram_max: 2
+    min_df: 2
+    max_df: 0.90
+    md_out: null
+
+  silence_detection:
+    enabled: true
+    group_by: "region"      # region|source
+    min_docs: 10
+    min_base_count: 18
+    min_base_df: 6
+    max_cur_count: 0        # 0 = must vanish; set 3 for "soft silence"
+    max_cur_df: 0
+    top: 60
+    per_group: true
+    min_docs_per_group: 10
+    dropout:
+      min_base_docs: 10
+      ratio: 0.30           # current/baseline <= 0.30 flags dropout
+    md_out: null
+
+  sentiment_shift:
+    enabled: true
+    group_by: "region"      # region|source
+    min_docs: 10
+    min_docs_per_group: 10
+    jsd: true               # lexical distribution shift
+    per_group: true
+    md_out: null
+
+report:
+  weekly:
+    enabled: true
+    window_days: 7
+    baseline_days: 7
+    out_subdir: "weekly"     # reports/YYYY-MM-DD/<out_subdir>/...
+    format: "markdown"       # markdown only for now
+    include:
+      volume_summary: true
+      top_terms: true
+      frequency_drift: true
+      topic_convergence: true
+      silence_detection: true
+      sentiment_shift: true
+
+runtime:
+  # Good defaults for cron/systemd runs
+  log_format: "json"         # json|text
+  fail_fast: false
+  max_runtime_sec: 900
+  tmp_dir: "/tmp/chaos-observatory"
+
+scheduling:
+  # Optional documentation-only section (systemd timers/cron can read these later)
+  ingest_hourly:
+    enabled: false
+    minute: 10
+  retention_daily:
+    enabled: false
+    hour: 2
+    minute: 15
+  weekly_report_daily:
+    enabled: false
+    hour: 3
+    minute: 0

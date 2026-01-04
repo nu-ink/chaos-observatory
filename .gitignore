@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# OS
+.DS_Store
+
+# Runtime data
+data/
+reports/
+*.sqlite3
+
+# Logs / temp
+*.log
+/tmp/
+
+# Secrets (if ever added)
+.env
