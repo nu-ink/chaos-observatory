@@ -1,5 +1,3 @@
-**Chaos-Observatory**, written as if this were a serious open-source / research-grade system. You can drop this directly into `README.md` at the repo root.
-
 ---
 
 # 🌐 Chaos-Observatory
