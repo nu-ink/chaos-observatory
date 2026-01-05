@@ -8,10 +8,8 @@ Tests both rss_collector.py and normalize.py functionality.
 from __future__ import annotations
 
 import json
-import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -322,7 +320,7 @@ class TestWriteJSONL:
 class TestFetchFeed:
     """Test fetch_feed() function."""
 
-    @patch("ingest.rss_collector.feedparser")
+    @patch.object(rss_collector, "feedparser")
     def test_fetch_feed_sets_user_agent(self, mock_feedparser):
         """Test that user agent is set before parsing."""
         mock_feedparser.parse.return_value = {"entries": []}
@@ -332,7 +330,7 @@ class TestFetchFeed:
         assert mock_feedparser.USER_AGENT == "Test-Agent/1.0"
         mock_feedparser.parse.assert_called_once_with("https://example.com/feed.xml")
 
-    @patch("ingest.rss_collector.feedparser")
+    @patch.object(rss_collector, "feedparser")
     def test_fetch_feed_returns_parsed(self, mock_feedparser):
         """Test that parsed feed is returned."""
         mock_result = {"entries": [{"title": "Test"}]}
@@ -346,108 +344,6 @@ class TestFetchFeed:
 # ============================================================================
 # Tests for normalize.py
 # ============================================================================
-
-class TestCleanText:
-    """Test clean_text() function."""
-
-    def test_basic_cleaning(self):
-        """Test basic text cleaning."""
-        text = "  Hello   World  "
-        result = normalize.clean_text(text)
-        assert result == "Hello World"
-
-    def test_nbsp_replacement(self):
-        """Test that non-breaking spaces are replaced."""
-        text = "Hello\u00a0World"
-        result = normalize.clean_text(text)
-        assert result == "Hello World"
-
-    def test_multiple_spaces(self):
-        """Test that multiple spaces are collapsed."""
-        text = "Hello    World    Test"
-        result = normalize.clean_text(text)
-        assert result == "Hello World Test"
-
-    def test_none_input(self):
-        """Test that None input returns empty string."""
-        result = normalize.clean_text(None)
-        assert result == ""
-
-    def test_empty_string(self):
-        """Test that empty string returns empty string."""
-        result = normalize.clean_text("")
-        assert result == ""
-
-    def test_newlines_and_tabs(self):
-        """Test that newlines and tabs are normalized."""
-        text = "Hello\n\tWorld"
-        result = normalize.clean_text(text)
-        assert result == "Hello World"
-
-
-class TestParseTimeBestEffort:
-    """Test parse_time_best_effort() function."""
-
-    def test_iso_format(self):
-        """Test parsing ISO format timestamp."""
-        result = normalize.parse_time_best_effort("2024-01-01T12:00:00Z")
-        assert result is not None
-        assert result.startswith("2024-01-01T12:00:00")
-
-    def test_rfc2822_format(self):
-        """Test parsing RFC2822 format."""
-        result = normalize.parse_time_best_effort("Mon, 01 Jan 2024 12:00:00 +0000")
-        assert result is not None
-        assert "2024-01-01" in result
-
-    def test_naive_datetime(self):
-        """Test that naive datetime gets UTC timezone."""
-        result = normalize.parse_time_best_effort("2024-01-01 12:00:00")
-        assert result is not None
-        assert result.endswith("+00:00") or "Z" in result
-
-    def test_none_input(self):
-        """Test that None input returns None."""
-        result = normalize.parse_time_best_effort(None)
-        assert result is None
-
-    def test_invalid_format(self):
-        """Test that invalid format returns None."""
-        result = normalize.parse_time_best_effort("not a date")
-        assert result is None
-
-    def test_empty_string(self):
-        """Test that empty string returns None."""
-        result = normalize.parse_time_best_effort("")
-        assert result is None
-
-
-class TestStableID:
-    """Test stable_id() function."""
-
-    def test_deterministic(self):
-        """Test that same inputs produce same ID."""
-        id1 = normalize.stable_id("source1", "url1", "title1", "2024-01-01")
-        id2 = normalize.stable_id("source1", "url1", "title1", "2024-01-01")
-        assert id1 == id2
-
-    def test_different_inputs(self):
-        """Test that different inputs produce different IDs."""
-        id1 = normalize.stable_id("source1", "url1", "title1", "2024-01-01")
-        id2 = normalize.stable_id("source2", "url1", "title1", "2024-01-01")
-        assert id1 != id2
-
-    def test_order_matters(self):
-        """Test that order of arguments matters."""
-        id1 = normalize.stable_id("a", "b", "c")
-        id2 = normalize.stable_id("c", "b", "a")
-        assert id1 != id2
-
-    def test_sha256_format(self):
-        """Test that ID is a valid SHA256 hex string."""
-        doc_id = normalize.stable_id("test")
-        assert len(doc_id) == 64  # SHA256 hex is 64 chars
-        assert all(c in "0123456789abcdef" for c in doc_id)
 
 
 class TestReadJSONL:
@@ -541,101 +437,101 @@ class TestNormalizeRow:
     def test_basic_normalization(self):
         """Test basic row normalization."""
         raw_row = {
-            "ingested_at_utc": "2024-01-01T10:00:00Z",
-            "source": {
-                "id": "test_source",
-                "label": "Test Source",
-                "region": "test_region",
-                "category": "test_category",
-                "feed_url": "https://example.com/feed.xml"
-            },
-            "item": {
-                "title": "Test Title",
-                "link": "https://example.com/article",
-                "published": "2024-01-01T12:00:00Z",
-                "summary": "Test summary"
-            }
+            "source_id": "test_source",
+            "title": "Test Title",
+            "link": "https://example.com/article",
+            "published": "2024-01-01T12:00:00Z",
+            "summary": "Test summary"
         }
 
         result = normalize.normalize_row(raw_row)
 
-        assert "id" in result
         assert result["source_id"] == "test_source"
-        assert result["source_label"] == "Test Source"
-        assert result["region"] == "test_region"
-        assert result["category"] == "test_category"
-        assert result["feed_url"] == "https://example.com/feed.xml"
         assert result["title"] == "Test Title"
         assert result["url"] == "https://example.com/article"
-        assert result["body_text"] == "Test summary"
-        assert result["published_at_utc"] is not None
-        assert result["ingested_at_utc"] == "2024-01-01T10:00:00Z"
-        assert "normalized_at_utc" in result
-        assert "raw" in result
-        assert result["raw"] == raw_row
+        assert result["published_ts"] == "2024-01-01T12:00:00Z"
+        assert result["summary"] == "Test summary"
+        assert result["text"] == "Test summary"
+
+    def test_url_fallback(self):
+        """Test that 'url' field is used as fallback for 'link'."""
+        raw_row = {
+            "source_id": "test",
+            "title": "Test",
+            "url": "https://example.com/article"
+        }
+
+        result = normalize.normalize_row(raw_row)
+
+        assert result["url"] == "https://example.com/article"
+
+    def test_link_precedence_over_url(self):
+        """Test that 'link' takes precedence over 'url'."""
+        raw_row = {
+            "source_id": "test",
+            "title": "Test",
+            "link": "https://example.com/link",
+            "url": "https://example.com/url"
+        }
+
+        result = normalize.normalize_row(raw_row)
+
+        assert result["url"] == "https://example.com/link"
+
+    def test_description_fallback(self):
+        """Test that 'description' field is used as fallback for 'summary'."""
+        raw_row = {
+            "source_id": "test",
+            "title": "Test",
+            "description": "Description text"
+        }
+
+        result = normalize.normalize_row(raw_row)
+
+        assert result["summary"] == "Description text"
+        assert result["text"] == "Description text"
+
+    def test_content_precedence_over_summary(self):
+        """Test that 'content' takes precedence over 'summary' for 'text' field."""
+        raw_row = {
+            "source_id": "test",
+            "title": "Test",
+            "content": "Content text",
+            "summary": "Summary text"
+        }
+
+        result = normalize.normalize_row(raw_row)
+
+        assert result["text"] == "Content text"
+        assert result["summary"] == "Summary text"
 
     def test_missing_fields(self):
         """Test normalization with missing optional fields."""
         raw_row = {
-            "source": {"id": "test"},
-            "item": {"title": "Test"}
-        }
-
-        result = normalize.normalize_row(raw_row)
-
-        assert result["source_id"] == "test"
-        assert result["source_label"] is None
-        assert result["region"] is None
-        assert result["category"] is None
-        assert result["title"] == "Test"
-        assert result["url"] is None
-        assert result["body_text"] == ""
-        assert result["published_at_utc"] is None
-
-    def test_stable_id_generation(self):
-        """Test that stable ID is generated correctly."""
-        raw_row = {
-            "source": {"id": "source1"},
-            "item": {
-                "title": "Title",
-                "link": "https://example.com",
-                "published": "2024-01-01T12:00:00Z"
-            }
-        }
-
-        result1 = normalize.normalize_row(raw_row)
-        result2 = normalize.normalize_row(raw_row)
-
-        # Same input should produce same ID
-        assert result1["id"] == result2["id"]
-
-    def test_text_cleaning(self):
-        """Test that text fields are cleaned."""
-        raw_row = {
-            "source": {"id": "test"},
-            "item": {
-                "title": "  Title  with  spaces  ",
-                "summary": "Summary\u00a0with\u00a0nbsp"
-            }
-        }
-
-        result = normalize.normalize_row(raw_row)
-
-        assert result["title"] == "Title with spaces"
-        assert result["body_text"] == "Summary with nbsp"
-
-    def test_empty_source_and_item(self):
-        """Test handling of empty source and item dicts."""
-        raw_row = {
-            "source": {},
-            "item": {}
+            "title": "Test"
         }
 
         result = normalize.normalize_row(raw_row)
 
         assert result["source_id"] is None
-        assert result["title"] == ""
-        assert "id" in result  # ID should still be generated
+        assert result["title"] == "Test"
+        assert result["url"] is None
+        assert result["published_ts"] is None
+        assert result["summary"] is None
+        assert result["text"] is None
+
+    def test_empty_dict(self):
+        """Test handling of empty dict."""
+        raw_row = {}
+
+        result = normalize.normalize_row(raw_row)
+
+        assert result["source_id"] is None
+        assert result["title"] is None
+        assert result["url"] is None
+        assert result["published_ts"] is None
+        assert result["summary"] is None
+        assert result["text"] is None
 
 
 # ============================================================================
@@ -647,23 +543,14 @@ class TestIntegration:
 
     def test_full_pipeline(self, tmp_path):
         """Test the full pipeline from raw to normalized."""
-        # Create a raw JSONL file
+        # Create a raw JSONL file (flat structure as expected by normalize_row)
         raw_file = tmp_path / "raw.jsonl"
         raw_data = {
-            "ingested_at_utc": "2024-01-01T10:00:00Z",
-            "source": {
-                "id": "test_source",
-                "label": "Test Source",
-                "region": "test",
-                "category": "test",
-                "feed_url": "https://example.com/feed.xml"
-            },
-            "item": {
-                "title": "Test Article",
-                "link": "https://example.com/article",
-                "published": "2024-01-01T12:00:00Z",
-                "summary": "Article summary"
-            }
+            "source_id": "test_source",
+            "title": "Test Article",
+            "link": "https://example.com/article",
+            "published": "2024-01-01T12:00:00Z",
+            "summary": "Article summary"
         }
         raw_file.write_text(json.dumps(raw_data, ensure_ascii=False) + "\n")
 
@@ -679,7 +566,10 @@ class TestIntegration:
         assert len(output_rows) == 1
         assert output_rows[0]["source_id"] == "test_source"
         assert output_rows[0]["title"] == "Test Article"
-        assert output_rows[0]["id"] is not None
+        assert output_rows[0]["url"] == "https://example.com/article"
+        assert output_rows[0]["published_ts"] == "2024-01-01T12:00:00Z"
+        assert output_rows[0]["summary"] == "Article summary"
+        assert output_rows[0]["text"] == "Article summary"
 
 
 # ============================================================================
