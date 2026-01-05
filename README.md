@@ -290,5 +290,5 @@ Use responsibly.
 
 
 
-* Prepare this for **GitHub README polish**
+
 
