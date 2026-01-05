@@ -1,4 +1,4 @@
----
+
 
 # 🌐 Chaos-Observatory
 
@@ -9,7 +9,6 @@ It ingests heterogeneous data streams (news, RSS, seismic feeds, alerts), normal
 > **Mission**
 > Detect early signals of chaos, track how events propagate across systems, and surface actionable insight before consequences fully unfold.
 
----
 
 ## 🧠 What Chaos-Observatory Can Detect
 
@@ -22,7 +21,7 @@ Examples of real-world signal chains:
 
 This system is **not predictive AI** (yet)—it is a **signal observatory**, designed for humans-in-the-loop analysis.
 
----
+
 
 ## 🏗️ System Architecture (High Level)
 
@@ -60,7 +59,7 @@ This system is **not predictive AI** (yet)—it is a **signal observatory**, des
    └───────────────────────┘
 ```
 
----
+
 
 ## 📁 Project Structure
 
@@ -98,7 +97,7 @@ chaos-observatory/
 └── .venv/
 ```
 
----
+
 
 ## ⚙️ Requirements
 
@@ -117,7 +116,7 @@ chaos-observatory/
   * SQLite (default, local)
   * PostgreSQL 15+ (recommended for scale)
 
----
+
 
 ## 🧪 Python Environment Setup
 
@@ -127,7 +126,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
----
+
 
 ## 🔐 Configuration
 
@@ -149,7 +148,7 @@ reporting:
   weekly_day: Sunday
 ```
 
----
+
 
 ## 🌊 Data Ingestion
 
@@ -177,7 +176,7 @@ Raw data will be written to:
 data/raw/YYYY-MM-DD/
 ```
 
----
+
 
 ## 🔄 Normalization
 
@@ -191,7 +190,7 @@ python ingest/normalize.py \
 
 Outputs **JSONL canonical events**.
 
----
+
 
 ## 🧠 Analysis Engines
 
@@ -225,7 +224,7 @@ python analysis/silence_detection.py
 python analysis/retention.py
 ```
 
----
+
 
 ## 📰 Reporting
 
@@ -242,7 +241,7 @@ Output includes:
 * Silence warnings
 * Emerging global narratives
 
----
+
 
 ## 🔁 Run as a Service (systemd)
 
@@ -253,7 +252,7 @@ sudo systemctl enable chaos-observatory
 sudo systemctl start chaos-observatory
 ```
 
----
+
 
 ## 🛡️ Design Principles
 
@@ -263,7 +262,7 @@ sudo systemctl start chaos-observatory
 * **Low dependency surface**
 * **Data locality**
 
----
+
 
 ## 🚧 Roadmap
 
@@ -274,7 +273,7 @@ sudo systemctl start chaos-observatory
 * [ ] Multi-language ingestion
 * [ ] Dashboard UI
 
----
+
 
 ## ⚠️ Disclaimer
 
@@ -283,19 +282,13 @@ It does not provide predictions, financial advice, or emergency alerts.
 
 Use responsibly.
 
----
+
 
 ## 🧭 Philosophy
 
 > *“Chaos is rarely random. It only appears so when viewed in isolation.”*
 
----
 
-If you want next steps, I can:
 
-* Tighten this into **production-grade open-source style**
-* Add **diagrams**
-* Add **example outputs**
-* Write **CONTRIBUTING.md + LICENSE**
 * Prepare this for **GitHub README polish**
 
