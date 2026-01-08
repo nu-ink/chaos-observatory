@@ -1,6 +1,6 @@
 
 
-# 🌐 Chaos-Observatory
+Chaos-Observatory
 
 **Chaos-Observatory** is an experimental global-signal intelligence platform designed to **observe, correlate, and reason about cascading events across the world**—from natural disasters to economic shocks, social unrest, and geopolitical consequences.
 
@@ -10,7 +10,7 @@ It ingests heterogeneous data streams (news, RSS, seismic feeds, alerts), normal
 > Detect early signals of chaos, track how events propagate across systems, and surface actionable insight before consequences fully unfold.
 
 
-## 🧠 What Chaos-Observatory Can Detect
+What Chaos-Observatory Can Detect
 
 Examples of real-world signal chains:
 
@@ -23,7 +23,7 @@ This system is **not predictive AI** (yet)—it is a **signal observatory**, des
 
 
 
-## 🏗️ System Architecture (High Level)
+System Architecture (High Level)
 
 ```text
         ┌────────────┐
@@ -61,7 +61,7 @@ This system is **not predictive AI** (yet)—it is a **signal observatory**, des
 
 
 
-## 📁 Project Structure
+Project Structure
 
 ```text
 chaos-observatory/
@@ -118,7 +118,7 @@ chaos-observatory/
 
 
 
-## 🧪 Python Environment Setup
+Python Environment Setup
 
 ```bash
 python3.11 -m venv .venv
@@ -128,7 +128,7 @@ pip install -r requirements.txt
 
 
 
-## 🔐 Configuration
+Configuration
 
 ### `config/chaos.yaml`
 
@@ -150,7 +150,7 @@ reporting:
 
 
 
-## 🌊 Data Ingestion
+##Data Ingestion
 
 ### Define Sources (`ingest/sources.yaml`)
 
@@ -178,7 +178,7 @@ data/raw/YYYY-MM-DD/
 
 
 
-## 🔄 Normalization
+## Normalization
 
 Normalize **directories or individual files**:
 
@@ -192,7 +192,7 @@ Outputs **JSONL canonical events**.
 
 
 
-## 🧠 Analysis Engines
+## Analysis Engines
 
 ### Frequency Drift
 
@@ -226,7 +226,7 @@ python analysis/retention.py
 
 
 
-## 📰 Reporting
+## Reporting
 
 Generate a weekly intelligence summary:
 
@@ -243,7 +243,7 @@ Output includes:
 
 
 
-## 🔁 Run as a Service (systemd)
+## Run as a Service (systemd)
 
 ```bash
 sudo cp chaos-observatory.service /etc/systemd/system/
@@ -254,7 +254,7 @@ sudo systemctl start chaos-observatory
 
 
 
-## 🛡️ Design Principles
+## Design Principles
 
 * **Human-in-the-Loop** (not autonomous decision-making)
 * **Explainable signals**
@@ -264,7 +264,7 @@ sudo systemctl start chaos-observatory
 
 
 
-## 🚧 Roadmap
+## Roadmap
 
 * [ ] Event graph linking (cause → effect)
 * [ ] Geo-temporal clustering
@@ -275,7 +275,7 @@ sudo systemctl start chaos-observatory
 
 
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 Chaos-Observatory is an **experimental research system**.
 It does not provide predictions, financial advice, or emergency alerts.
@@ -284,7 +284,7 @@ Use responsibly.
 
 
 
-## 🧭 Philosophy
+##  Philosophy
 
 > *“Chaos is rarely random. It only appears so when viewed in isolation.”*
 
