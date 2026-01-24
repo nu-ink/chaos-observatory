@@ -43,8 +43,13 @@ def run_ingest():
 
 def run_normalize():
     """Run normalization step."""
+    import subprocess
+    from datetime import datetime, timezone
+
     log.info("Starting normalize")
-    from ingest.normalize import main as normalize_main
+    
+    day = datetime.now(timezone.utc),strftime("%Y-%m-%d")
+    #from ingest.normalize import main as normalize_main
     
     start_time = time.time()
     exit_code = normalize_main()

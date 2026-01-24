@@ -45,11 +45,11 @@ def normalize_file(inp: Path, out: Path) -> int:
     return written
 
 
-def main() -> int:
+def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--in", dest="inp", required=True, help="Input JSONL file or directory")
     parser.add_argument("--out", dest="out", required=True, help="Output JSONL file or directory")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     inp = Path(args.inp)
     out = Path(args.out)
