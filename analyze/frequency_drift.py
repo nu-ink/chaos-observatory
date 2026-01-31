@@ -3,8 +3,8 @@
 Chaos-Observatory: Frequency Drift Analyzer (robust v1)
 
 Goal:
-  Identify terms/phrases whose relative frequency increases in a "current" window
-  compared to a "baseline" window.
+  Identify terms/phrases whose relative frequency increases in a "current"
+  window compared to a "baseline" window.
 
 Input:
   Normalized JSONL docs in date partitions:
@@ -34,22 +34,94 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import Dict, Iterable, List, Sequence, Set, Tuple
 
 
 # ----------------------------
 # Stopwords (v1; extend later)
 # ----------------------------
 STOPWORDS: Set[str] = {
-    "a","an","and","are","as","at","be","been","but","by","can","could","did","do","does",
-    "for","from","had","has","have","he","her","his","how","i","if","in","into","is","it",
-    "its","just","may","might","more","most","must","not","of","on","or","our","out","over",
-    "s","said","she","should","so","some","than","that","the","their","them","then","there",
-    "these","they","this","to","too","under","up","was","we","were","what","when","where",
-    "which","who","will","with","would","you","your",
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "been",
+    "but",
+    "by",
+    "can",
+    "could",
+    "did",
+    "do",
+    "does",
+    "for",
+    "from",
+    "had",
+    "has",
+    "have",
+    "he",
+    "her",
+    "his",
+    "how",
+    "i",
+    "if",
+    "in",
+    "into",
+    "is",
+    "it",
+    "its",
+    "just",
+    "may",
+    "might",
+    "more",
+    "most",
+    "must",
+    "not",
+    "of",
+    "on",
+    "or",
+    "our",
+    "out",
+    "over",
+    "s",
+    "said",
+    "she",
+    "should",
+    "so",
+    "some",
+    "than",
+    "that",
+    "the",
+    "their",
+    "them",
+    "then",
+    "there",
+    "these",
+    "they",
+    "this",
+    "to",
+    "too",
+    "under",
+    "up",
+    "was",
+    "we",
+    "were",
+    "what",
+    "when",
+    "where",
+    "which",
+    "who",
+    "will",
+    "with",
+    "would",
+    "you",
+    "your",
 }
 
-TOKEN_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9\-]{1,}")  # allow digits/hyphen after first alpha
+TOKEN_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9\-]{1,}")
+# allow digits/hyphen after first alpha
 
 
 @dataclass(frozen=True)

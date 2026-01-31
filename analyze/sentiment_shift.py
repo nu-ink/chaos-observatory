@@ -39,19 +39,88 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import Dict, Iterable, List, Sequence, Set, Tuple
 
 
 # ----------------------------
 # Stopwords (extend later)
 # ----------------------------
 STOPWORDS: Set[str] = {
-    "a","an","and","are","as","at","be","been","but","by","can","could","did","do","does",
-    "for","from","had","has","have","he","her","his","how","i","if","in","into","is","it",
-    "its","just","may","might","more","most","not","of","on","or","our","out","over",
-    "s","said","she","should","so","some","than","that","the","their","them","then","there",
-    "these","they","this","to","too","under","up","was","we","were","what","when","where",
-    "which","who","with","would","you","your",
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "been",
+    "but",
+    "by",
+    "can",
+    "could",
+    "did",
+    "do",
+    "does",
+    "for",
+    "from",
+    "had",
+    "has",
+    "have",
+    "he",
+    "her",
+    "his",
+    "how",
+    "i",
+    "if",
+    "in",
+    "into",
+    "is",
+    "it",
+    "its",
+    "just",
+    "may",
+    "might",
+    "more",
+    "most",
+    "not",
+    "of",
+    "on",
+    "or",
+    "our",
+    "out",
+    "over",
+    "s",
+    "said",
+    "she",
+    "should",
+    "so",
+    "some",
+    "than",
+    "that",
+    "the",
+    "their",
+    "them",
+    "then",
+    "there",
+    "these",
+    "they",
+    "this",
+    "to",
+    "too",
+    "under",
+    "up",
+    "was",
+    "we",
+    "were",
+    "what",
+    "when",
+    "where",
+    "which",
+    "who",
+    "with",
+    "would",
+    "you",
+    "your",
 }
 
 TOKEN_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9\-]{1,}")
@@ -62,32 +131,115 @@ TOKEN_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9\-]{1,}")
 # Tune over time.
 # ----------------------------
 POS_WORDS = {
-    "agree","aid","calm","ceasefire","cooperate","cooperation","deal","decrease","deescalate",
-    "growth","improve","improvement","progress","recover","recovery","relief","rescue",
-    "stabilize","support","truce","peace","reopen","rebuild",
+    "agree",
+    "aid",
+    "calm",
+    "ceasefire",
+    "cooperate",
+    "cooperation",
+    "deal",
+    "decrease",
+    "deescalate",
+    "growth",
+    "improve",
+    "improvement",
+    "progress",
+    "recover",
+    "recovery",
+    "relief",
+    "rescue",
+    "stabilize",
+    "support",
+    "truce",
+    "peace",
+    "reopen",
+    "rebuild",
 }
 
 NEG_WORDS = {
-    "attack","bomb","crisis","dead","death","disaster","emergency","escalate","explosion",
-    "famine","fear","fighting","flood","hostage","inflation","injury","killed","missile",
-    "outbreak","pandemic","protest","raid","risk","sanction","shortage","strike","threat",
-    "tension","war","violence","collapse",
+    "attack",
+    "bomb",
+    "crisis",
+    "dead",
+    "death",
+    "disaster",
+    "emergency",
+    "escalate",
+    "explosion",
+    "famine",
+    "fear",
+    "fighting",
+    "flood",
+    "hostage",
+    "inflation",
+    "injury",
+    "killed",
+    "missile",
+    "outbreak",
+    "pandemic",
+    "protest",
+    "raid",
+    "risk",
+    "sanction",
+    "shortage",
+    "strike",
+    "threat",
+    "tension",
+    "war",
+    "violence",
+    "collapse",
 }
 
 URGENCY_WORDS = {
-    "urgent","critically","critical","emergency","immediately","warning","alert","evacuate",
-    "evacuation","deadline","severe","rapid","surge","spike","escalation",
+    "urgent",
+    "critically",
+    "critical",
+    "emergency",
+    "immediately",
+    "warning",
+    "alert",
+    "evacuate",
+    "evacuation",
+    "deadline",
+    "severe",
+    "rapid",
+    "surge",
+    "spike",
+    "escalation",
 }
 
 CERTAINTY_WORDS = {
-    "must","will","cannot","never","always","inevitable","certain","clearly","undeniable",
-    "required","demand","order","ban",
+    "must",
+    "will",
+    "cannot",
+    "never",
+    "always",
+    "inevitable",
+    "certain",
+    "clearly",
+    "undeniable",
+    "required",
+    "demand",
+    "order",
+    "ban",
 }
 
 # (Optional) "uncertainty/hedging" can also be tracked; sometimes rising hedging is signal.
 HEDGE_WORDS = {
-    "may","might","could","possible","possibly","reportedly","alleged","allegedly","suggest",
-    "suggests","unclear","unknown","likely","unlikely",
+    "may",
+    "might",
+    "could",
+    "possible",
+    "possibly",
+    "reportedly",
+    "alleged",
+    "allegedly",
+    "suggest",
+    "suggests",
+    "unclear",
+    "unknown",
+    "likely",
+    "unlikely",
 }
 
 
@@ -268,7 +420,14 @@ def write_markdown(out_path: Path, result: dict) -> None:
     lines.append("")
     lines.append("| Metric | Current | Baseline | Delta |")
     lines.append("|---|---:|---:|---:|")
-    for k in ["pos_rate","neg_rate","urgency_rate","certainty_rate","hedge_rate","compression"]:
+    for k in [
+        "pos_rate",
+        "neg_rate",
+        "urgency_rate",
+        "certainty_rate",
+        "hedge_rate",
+        "compression",
+    ]:
         lines.append(f"| {k} | {cur[k]:.6f} | {base[k]:.6f} | {dlt[k]:.6f} |")
     lines.append("")
     lines.append("| Docs/Token Metric | Current | Baseline |")
@@ -289,10 +448,13 @@ def write_markdown(out_path: Path, result: dict) -> None:
         lines.append("|---|---:|---:|---:|---:|---:|---:|---:|")
         for g, row in list(per_group.items())[:25]:
             lines.append(
-                f"| {g.replace('|','\\\\|')} | {row['docs_current']}/{row['docs_baseline']} | "
-                f"{row['delta']['compression']:.6f} | {row['delta']['neg_rate']:.6f} | "
-                f"{row['delta']['urgency_rate']:.6f} | {row['delta']['certainty_rate']:.6f} | "
-                f"{row['delta']['pos_rate']:.6f} | {row['delta']['hedge_rate']:.6f} |"
+                "| "
+                + g.replace("|", "\\\\|")
+                + " | "
+                + f"{row['docs_current']}/{row['docs_baseline']} | "
+                + f"{row['delta']['compression']:.6f} | {row['delta']['neg_rate']:.6f} | "
+                + f"{row['delta']['urgency_rate']:.6f} | {row['delta']['certainty_rate']:.6f} | "
+                + f"{row['delta']['pos_rate']:.6f} | {row['delta']['hedge_rate']:.6f} |"
             )
 
     out_path.parent.mkdir(parents=True, exist_ok=True)

@@ -36,16 +36,87 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Tuple, Set
 
 # ---------- Stopwords (extend later) ----------
-STOPWORDS = {
-    "a","an","and","are","as","at","be","been","but","by","can","could","did","do","does",
-    "for","from","had","has","have","he","her","his","how","i","if","in","into","is","it",
-    "its","just","may","might","more","most","must","not","of","on","or","our","out","over",
-    "s","said","she","should","so","some","than","that","the","their","them","then","there",
-    "these","they","this","to","too","under","up","was","we","were","what","when","where",
-    "which","who","will","with","would","you","your",
+STOPWORDS: Set[str] = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "been",
+    "but",
+    "by",
+    "can",
+    "could",
+    "did",
+    "do",
+    "does",
+    "for",
+    "from",
+    "had",
+    "has",
+    "have",
+    "he",
+    "her",
+    "his",
+    "how",
+    "i",
+    "if",
+    "in",
+    "into",
+    "is",
+    "it",
+    "its",
+    "just",
+    "may",
+    "might",
+    "more",
+    "most",
+    "must",
+    "not",
+    "of",
+    "on",
+    "or",
+    "our",
+    "out",
+    "over",
+    "s",
+    "said",
+    "she",
+    "should",
+    "so",
+    "some",
+    "than",
+    "that",
+    "the",
+    "their",
+    "them",
+    "then",
+    "there",
+    "these",
+    "they",
+    "this",
+    "to",
+    "too",
+    "under",
+    "up",
+    "was",
+    "we",
+    "were",
+    "what",
+    "when",
+    "where",
+    "which",
+    "who",
+    "will",
+    "with",
+    "would",
+    "you",
+    "your",
 }
 
 TOKEN_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9\-]{1,}")
@@ -185,7 +256,9 @@ def make_markdown_report(
     lines.append("| Term | Coverage (groups) | Avg TF-IDF |")
     lines.append("|---|---:|---:|")
     for t in convergent_terms[:30]:
-        lines.append(f"| {t['term'].replace('|','\\\\|')} | {t['coverage']} | {t['avg_tfidf']:.6f} |")
+        lines.append(
+            f"| {t['term'].replace('|', '\\\\|')} | {t['coverage']} | {t['avg_tfidf']:.6f} |"
+        )
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
