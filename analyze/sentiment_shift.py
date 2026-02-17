@@ -123,7 +123,7 @@ STOPWORDS: Set[str] = {
     "your",
 }
 
-TOKEN_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9\-]{1,}")
+TOKEN_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9\-]+")
 
 
 # ----------------------------
