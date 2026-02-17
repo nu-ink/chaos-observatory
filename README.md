@@ -2,7 +2,7 @@
 
 Chaos-Observatory
 
-**Chaos-Observatory** is an experimental global-signal intelligence platform designed to **observe, correlate, and reason about cascading events across the world**—from natural disasters to economic shocks, social unrest, and geopolitical consequences.
+**Chaos-Observatory** is an experimental global-signal intelligence platform designed to observe, correlate, and reason about cascading events across the world— from natural disasters to economic shocks, social unrest, and geopolitical consequences.
 
 It ingests heterogeneous data streams (news, RSS, seismic feeds, alerts), normalizes them into a unified timeline, and applies analytical models to detect **patterns of escalation, convergence, silence, and drift** across domains.
 
@@ -19,7 +19,7 @@ Examples of real-world signal chains:
 * Political unrest → Currency pressure → Capital flight
 * Disease outbreak → News saturation → Public fatigue → Silence risk
 
-This system is **not predictive AI** (yet)—it is a **signal observatory**, designed for humans-in-the-loop analysis.
+This system is *not predictive AI* (yet) — it is a signal observatory, designed for humans-in-the-loop analysis.
 
 
 
@@ -32,26 +32,26 @@ System Architecture (High Level)
               │
               ▼
        ┌──────────────┐
-       │  Ingest Layer│  (rss_collector.py)
+       │  Ingest Layer│  (`ingest/rss_collector.py`)
        └─────┬────────┘
-             ▼
-     ┌─────────────────┐
-     │ Normalization   │  (normalize.py)
-     │ & Canonical Data│
-     └─────┬───────────┘
+         ▼
+         ┌─────────────────┐
+         │ Normalization   │  (`ingest/normalize.py`)
+         │ & Canonical Data│
+         └─────┬───────────┘
            ▼
-     ┌─────────────────┐
-     │  Storage Layer  │  (SQLite / Postgres)
-     └─────┬───────────┘
+         ┌─────────────────┐
+         │  Storage Layer  │  (SQLite / Postgres via `storage/db.py`)
+         └─────┬───────────┘
            ▼
-   ┌───────────────────────┐
-   │ Analysis Engines      │
-   │ • Frequency Drift     │
-   │ • Topic Convergence   │
-   │ • Sentiment Shift     │
-   │ • Silence Detection  │
-   │ • Retention Decay     │
-   └─────┬─────────────────┘
+       ┌───────────────────────┐
+       │ Analysis Engines      │  (in `analyze/`)
+       │ • Frequency Drift     │  (`analyze/frequency_drift.py`)
+       │ • Topic Convergence   │  (`analyze/topic_convergence.py`)
+       │ • Sentiment Shift     │  (`analyze/sentiment_shift.py`)
+       │ • Silence Detection   │  (`analyze/silence_detection.py`)
+       │ • Retention Decay     │  (`hold/retention.py`)
+       └─────┬─────────────────┘
          ▼
    ┌───────────────────────┐
    │ Reports & Signals     │
@@ -61,38 +61,19 @@ System Architecture (High Level)
 
 
 
-Project Structure
+**Project Structure**
 
 ```text
 chaos-observatory/
-├── ingest/
-│   ├── sources.yaml          # Feed definitions
-│   ├── rss_collector.py      # Raw data ingestion
-│   └── normalize.py          # Canonical normalization
-│
-├── analysis/
-│   ├── frequency_drift.py    # Event rate changes
-│   ├── topic_convergence.py  # Cross-domain topic merging
-│   ├── sentiment_shift.py    # Emotional tone movement
-│   ├── silence_detection.py  # Signal disappearance
-│   └── retention.py          # Memory decay modeling
-│
-├── report/
-│   └── weekly_report.py      # Human-readable output
-│
-├── storage/
-│   ├── schema.sql            # DB schema
-│   └── db.py                 # DB abstraction
-│
-├── config/
-│   └── chaos.yaml            # Global config
-│
-├── data/
-│   ├── raw/                  # Unprocessed ingest
-│   └── normalized/           # Canonical JSONL
-│
-├── chaos-observatory.service # systemd service
+├── ingest/                  # rss_collector.py, normalize.py, sources.yaml
+├── analyze/                 # analysis engines (frequency, topic, sentiment, silence)
+├── report/                  # weekly_report.py
+├── storage/                 # schema.sql, db.py
+├── config/                  # chaos.yaml
+├── hold/                    # retention and retention review notes
+├── systemd/                 # service unit (packaged, not installed)
 ├── requirements.txt
+├── Pipfile
 ├── README.md
 └── .venv/
 ```
@@ -110,7 +91,7 @@ chaos-observatory/
 
 ### Software
 
-* **Python**: 3.11+
+- **Python**: 3.11+ (3.12 also tested in dev environment)
 * **Database**:
 
   * SQLite (default, local)
@@ -150,7 +131,7 @@ reporting:
 
 
 
-##Data Ingestion
+## Data Ingestion
 
 ### Define Sources (`ingest/sources.yaml`)
 
@@ -170,11 +151,7 @@ reporting:
 python ingest/rss_collector.py
 ```
 
-Raw data will be written to:
-
-```text
-data/raw/YYYY-MM-DD/
-```
+By convention raw/normalized output is organized by date (for example `data/raw/YYYY-MM-DD` and `data/normalized/YYYY-MM-DD`). These `data/` directories are not committed to the repository — create them as needed or configure `config/chaos.yaml` to point to your storage paths.
 
 
 
@@ -214,14 +191,14 @@ Flags **dangerous absence of expected signals**.
 
 Models how long topics persist before fading from discourse.
 
-Run all analysis:
+Run all analysis (scripts live under `analyze/`, retention lives under `hold/`):
 
 ```bash
-python analysis/frequency_drift.py
-python analysis/topic_convergence.py
-python analysis/sentiment_shift.py
-python analysis/silence_detection.py
-python analysis/retention.py
+python analyze/frequency_drift.py
+python analyze/topic_convergence.py
+python analyze/sentiment_shift.py
+python analyze/silence_detection.py
+python hold/retention.py
 ```
 
 
@@ -246,7 +223,8 @@ Output includes:
 ## Run as a Service (systemd)
 
 ```bash
-sudo cp chaos-observatory.service /etc/systemd/system/
+# Copy and enable service (packaged unit file is in systemd/)
+sudo cp systemd/chaos-observatory.service.ini /etc/systemd/system/chaos-observatory.service
 sudo systemctl daemon-reexec
 sudo systemctl enable chaos-observatory
 sudo systemctl start chaos-observatory
