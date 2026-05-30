@@ -447,21 +447,19 @@ def write_markdown(out_path: Path, result: dict) -> None:
         lines.append("| Group | Docs(cur/base) | compression Δ | neg Δ | urgency Δ | certainty Δ | pos Δ | hedge Δ |")
         lines.append("|---|---:|---:|---:|---:|---:|---:|---:|")
         for g, row in list(per_group.items())[:25]:
+            group = g.replace("|", "\\|")
             lines.append(
-                "| "
-                + g.replace("|", "\\\\|")
-                + " | "
-                + f"{row['docs_current']}/{row['docs_baseline']} | "
-                + f"{row['delta']['compression']:.6f} | {row['delta']['neg_rate']:.6f} | "
-                + f"{row['delta']['urgency_rate']:.6f} | {row['delta']['certainty_rate']:.6f} | "
-                + f"{row['delta']['pos_rate']:.6f} | {row['delta']['hedge_rate']:.6f} |"
+                f"| {group} | {row['docs_current']}/{row['docs_baseline']} | "
+                f"{row['delta']['compression']:.6f} | {row['delta']['neg_rate']:.6f} | "
+                f"{row['delta']['urgency_rate']:.6f} | {row['delta']['certainty_rate']:.6f} | "
+                f"{row['delta']['pos_rate']:.6f} | {row['delta']['hedge_rate']:.6f} |"
             )
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def main() -> int:
+def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--normalized-dir", default="data/normalized", help="Base normalized partition dir")
     ap.add_argument("--end-date", default=None, help="UTC end date YYYY-MM-DD (default: today UTC)")
@@ -474,7 +472,7 @@ def main() -> int:
     ap.add_argument("--per-group", action="store_true", help="Also compute per-group shifts")
     ap.add_argument("--jsd", action="store_true", help="Compute lexical Jensen–Shannon distance between windows")
     ap.add_argument("--md-out", default=None, help="Optional markdown output path")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     if args.window_days <= 0 or args.baseline_days <= 0:
         raise SystemExit("ERROR: window-days and baseline-days must be > 0")

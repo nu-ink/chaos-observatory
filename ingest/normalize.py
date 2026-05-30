@@ -2,7 +2,7 @@
 import argparse
 import json
 from pathlib import Path
-from typing import Iterable, Dict
+from typing import Any, Iterable, Dict, Optional
 
 
 def read_jsonl(path: Path) -> Iterable[Dict]:
@@ -24,18 +24,48 @@ def write_jsonl(path: Path, rows: Iterable[Dict]) -> int:
     return count
 
 
+def first_present(*values: Optional[Any]) -> Optional[Any]:
+    for value in values:
+        if value not in (None, ""):
+            return value
+    return None
+
+
 def normalize_row(row: Dict) -> Dict:
     """
     Normalize a single raw RSS item into a canonical shape.
     Adjust fields here as your schema evolves.
     """
+    source = row.get("source") or {}
+    item = row.get("item") or {}
+
+    source_id = first_present(row.get("source_id"), source.get("id"))
+    source_label = first_present(row.get("source_label"), source.get("label"), source_id)
+    region = first_present(row.get("region"), source.get("region"), "unknown")
+    category = first_present(row.get("category"), source.get("category"), "unknown")
+    feed_url = first_present(row.get("feed_url"), source.get("feed_url"))
+
+    title = first_present(row.get("title"), item.get("title"))
+    url = first_present(row.get("link"), row.get("url"), item.get("link"), item.get("url"))
+    published_at = first_present(row.get("published_at_utc"), row.get("published_ts"), row.get("published"), item.get("published"))
+    summary = first_present(row.get("summary"), row.get("description"), item.get("summary"), item.get("description"))
+    body_text = first_present(row.get("body_text"), row.get("text"), row.get("content"), item.get("content"), summary)
+
     return {
-        "source_id": row.get("source_id"),
-        "title": row.get("title"),
-        "url": row.get("link") or row.get("url"),
-        "published_ts": row.get("published"),
-        "summary": row.get("summary") or row.get("description"),
-        "text": row.get("content") or row.get("summary"),
+        "source_id": source_id,
+        "source_label": source_label,
+        "region": region,
+        "category": category,
+        "feed_url": feed_url,
+        "title": title,
+        "url": url,
+        "published_at_utc": published_at,
+        "summary": summary,
+        "body_text": body_text,
+        "ingested_at_utc": row.get("ingested_at_utc"),
+        # Backward-compatible aliases for older callers/tests.
+        "published_ts": published_at,
+        "text": body_text,
     }
 
 

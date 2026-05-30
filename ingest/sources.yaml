@@ -47,4 +47,4 @@ sources:
     enabled: true
     # ReliefWeb supports RSS subscriptions; this is a solid early-warning source.
     feeds:
-      - url: "https://reliefweb.int/rss/updates.xml"
+      - url: "https://reliefweb.int/updates/rss.xml"

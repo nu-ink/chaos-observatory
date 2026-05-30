@@ -256,15 +256,14 @@ def make_markdown_report(
     lines.append("| Term | Coverage (groups) | Avg TF-IDF |")
     lines.append("|---|---:|---:|")
     for t in convergent_terms[:30]:
-        lines.append(
-            f"| {t['term'].replace('|', '\\\\|')} | {t['coverage']} | {t['avg_tfidf']:.6f} |"
-        )
+        term = t["term"].replace("|", "\\|")
+        lines.append(f"| {term} | {t['coverage']} | {t['avg_tfidf']:.6f} |")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def main() -> int:
+def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--normalized-dir", default="data/normalized", help="Base normalized partition dir")
     ap.add_argument("--end-date", default=None, help="UTC end date YYYY-MM-DD (default: today UTC)")
@@ -278,7 +277,7 @@ def main() -> int:
     ap.add_argument("--min-df", type=int, default=2, help="TF-IDF min_df")
     ap.add_argument("--max-df", type=float, default=0.90, help="TF-IDF max_df (float fraction)")
     ap.add_argument("--md-out", default=None, help="Optional markdown output path")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     if args.window_days <= 0:
         raise SystemExit("ERROR: --window-days must be > 0")
@@ -330,7 +329,7 @@ def main() -> int:
     # Vectorize documents
     vectorizer = TfidfVectorizer(
         lowercase=True,
-        stop_words=STOPWORDS,
+        stop_words=sorted(STOPWORDS),
         ngram_range=(1, args.ngram_max),
         min_df=args.min_df,
         max_df=args.max_df,

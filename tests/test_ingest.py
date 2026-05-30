@@ -13,26 +13,13 @@ from unittest.mock import patch
 
 import pytest
 
-# Import modules under test
 import sys
-import importlib.util
 
 # Add parent directory to path
 parent_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(parent_dir))
 
-# Import modules directly using importlib (works without __init__.py)
-spec_normalize = importlib.util.spec_from_file_location(
-    "normalize", parent_dir / "ingest" / "normalize.py"
-)
-normalize = importlib.util.module_from_spec(spec_normalize)
-spec_normalize.loader.exec_module(normalize)
-
-spec_rss = importlib.util.spec_from_file_location(
-    "rss_collector", parent_dir / "ingest" / "rss_collector.py"
-)
-rss_collector = importlib.util.module_from_spec(spec_rss)
-spec_rss.loader.exec_module(rss_collector)
+from ingest import normalize, rss_collector
 
 
 # ============================================================================
@@ -320,19 +307,30 @@ class TestWriteJSONL:
 class TestFetchFeed:
     """Test fetch_feed() function."""
 
+    @patch.object(rss_collector, "requests")
     @patch.object(rss_collector, "feedparser")
-    def test_fetch_feed_sets_user_agent(self, mock_feedparser):
+    def test_fetch_feed_sets_user_agent(self, mock_feedparser, mock_requests):
         """Test that user agent is set before parsing."""
+        mock_response = mock_requests.get.return_value
+        mock_response.content = b"<rss></rss>"
         mock_feedparser.parse.return_value = {"entries": []}
 
         rss_collector.fetch_feed("https://example.com/feed.xml", timeout_sec=20, user_agent="Test-Agent/1.0")
 
         assert mock_feedparser.USER_AGENT == "Test-Agent/1.0"
-        mock_feedparser.parse.assert_called_once_with("https://example.com/feed.xml")
+        mock_requests.get.assert_called_once_with(
+            "https://example.com/feed.xml",
+            headers={"User-Agent": "Test-Agent/1.0"},
+            timeout=20,
+        )
+        mock_response.raise_for_status.assert_called_once_with()
+        mock_feedparser.parse.assert_called_once_with(b"<rss></rss>")
 
+    @patch.object(rss_collector, "requests")
     @patch.object(rss_collector, "feedparser")
-    def test_fetch_feed_returns_parsed(self, mock_feedparser):
+    def test_fetch_feed_returns_parsed(self, mock_feedparser, mock_requests):
         """Test that parsed feed is returned."""
+        mock_requests.get.return_value.content = b"<rss></rss>"
         mock_result = {"entries": [{"title": "Test"}]}
         mock_feedparser.parse.return_value = mock_result
 
@@ -450,8 +448,43 @@ class TestNormalizeRow:
         assert result["title"] == "Test Title"
         assert result["url"] == "https://example.com/article"
         assert result["published_ts"] == "2024-01-01T12:00:00Z"
+        assert result["published_at_utc"] == "2024-01-01T12:00:00Z"
         assert result["summary"] == "Test summary"
         assert result["text"] == "Test summary"
+        assert result["body_text"] == "Test summary"
+
+    def test_nested_collector_row_normalization(self):
+        """Test normalizing rows written by rss_collector.py."""
+        raw_row = {
+            "ingested_at_utc": "2024-01-01T12:00:10+00:00",
+            "source": {
+                "id": "bbc_world",
+                "label": "BBC News - World",
+                "region": "global",
+                "category": "news",
+                "feed_url": "https://example.com/feed.xml",
+            },
+            "item": {
+                "title": "Nested Title",
+                "link": "https://example.com/nested",
+                "published": "2024-01-01T12:00:00Z",
+                "summary": "Nested summary",
+            },
+        }
+
+        result = normalize.normalize_row(raw_row)
+
+        assert result["source_id"] == "bbc_world"
+        assert result["source_label"] == "BBC News - World"
+        assert result["region"] == "global"
+        assert result["category"] == "news"
+        assert result["feed_url"] == "https://example.com/feed.xml"
+        assert result["title"] == "Nested Title"
+        assert result["url"] == "https://example.com/nested"
+        assert result["published_at_utc"] == "2024-01-01T12:00:00Z"
+        assert result["summary"] == "Nested summary"
+        assert result["body_text"] == "Nested summary"
+        assert result["ingested_at_utc"] == "2024-01-01T12:00:10+00:00"
 
     def test_url_fallback(self):
         """Test that 'url' field is used as fallback for 'link'."""
@@ -568,12 +601,13 @@ class TestIntegration:
         assert output_rows[0]["title"] == "Test Article"
         assert output_rows[0]["url"] == "https://example.com/article"
         assert output_rows[0]["published_ts"] == "2024-01-01T12:00:00Z"
+        assert output_rows[0]["published_at_utc"] == "2024-01-01T12:00:00Z"
         assert output_rows[0]["summary"] == "Article summary"
         assert output_rows[0]["text"] == "Article summary"
+        assert output_rows[0]["body_text"] == "Article summary"
 
 
 # ============================================================================
 # Fixtures
 # ============================================================================
 # Note: pytest provides tmp_path fixture automatically, no need to define it
-

@@ -14,6 +14,7 @@ Designed to be executed by systemd timer every 15 minutes.
 import sys
 import logging
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 # --- basic logging ---
@@ -24,13 +25,17 @@ logging.basicConfig(
 log = logging.getLogger("chaos-pipeline")
 
 
+def utc_day() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+
 def run_ingest():
     """Run RSS collection step."""
     log.info("Starting ingest")
     from ingest.rss_collector import main as ingest_main
     
     start_time = time.time()
-    exit_code = ingest_main()
+    exit_code = ingest_main(["--sources", "ingest/sources.yaml", "--outdir", "data/raw"])
     elapsed = time.time() - start_time
     
     if exit_code != 0:
@@ -41,13 +46,16 @@ def run_ingest():
     return exit_code
 
 
-def run_normalize():
+def run_normalize(day: str):
     """Run normalization step."""
     log.info("Starting normalize")
     from ingest.normalize import main as normalize_main
     
     start_time = time.time()
-    exit_code = normalize_main()
+    raw_dir = Path("data/raw") / day
+    normalized_dir = Path("data/normalized") / day
+    normalized_dir.mkdir(parents=True, exist_ok=True)
+    exit_code = normalize_main(["--in", str(raw_dir), "--out", str(normalized_dir)])
     elapsed = time.time() - start_time
     
     if exit_code != 0:
@@ -58,7 +66,7 @@ def run_normalize():
     return exit_code
 
 
-def run_analysis():
+def run_analysis(day: str):
     """Run all analysis steps."""
     log.info("Starting analysis")
     
@@ -69,19 +77,25 @@ def run_analysis():
     from analyze.sentiment_shift import main as sentiment_main
 
     analysis_steps = [
-        ("frequency_drift", freq_main),
-        ("topic_convergence", conv_main),
-        ("silence_detection", silence_main),
-        ("sentiment_shift", sentiment_main),
+        ("frequency_drift", freq_main, ["--normalized-dir", "data/normalized", "--end-date", day]),
+        ("topic_convergence", conv_main, ["--normalized-dir", "data/normalized", "--end-date", day]),
+        ("silence_detection", silence_main, ["--normalized-dir", "data/normalized", "--end-date", day]),
+        ("sentiment_shift", sentiment_main, ["--normalized-dir", "data/normalized", "--end-date", day]),
     ]
     
     start_time = time.time()
-    for step_name, step_main in analysis_steps:
+    for step_name, step_main, step_args in analysis_steps:
         step_start = time.time()
-        exit_code = step_main()
+        exit_code = step_main(step_args)
         step_elapsed = time.time() - step_start
         
         if exit_code != 0:
+            if exit_code == 2:
+                log.warning(
+                    f"Analysis step '{step_name}' skipped or incomplete with exit code {exit_code} "
+                    f"(took {step_elapsed:.2f}s)"
+                )
+                continue
             log.error(f"Analysis step '{step_name}' failed with exit code {exit_code} (took {step_elapsed:.2f}s)")
             raise RuntimeError(f"Analysis step '{step_name}' failed with exit code {exit_code}")
         
@@ -91,13 +105,19 @@ def run_analysis():
     log.info(f"All analysis steps completed successfully (total: {elapsed:.2f}s)")
 
 
-def run_report():
+def run_report(day: str):
     """Run report generation step."""
     log.info("Starting report")
     from report.weekly_report import main as report_main
     
     start_time = time.time()
-    exit_code = report_main()
+    exit_code = report_main([
+        "--normalized-dir", "data/normalized",
+        "--outdir", "reports",
+        "--end-date", day,
+        "--window-days", "7",
+        "--baseline-days", "7",
+    ])
     elapsed = time.time() - start_time
     
     if exit_code != 0:
@@ -114,11 +134,12 @@ def main():
     
     try:
         log.info("Chaos Observatory run started")
+        day = utc_day()
 
         run_ingest()
-        run_normalize()
-        run_analysis()
-        run_report()
+        run_normalize(day)
+        run_analysis(day)
+        run_report(day)
 
         total_elapsed = time.time() - pipeline_start
         log.info(f"Chaos Observatory run completed successfully (total: {total_elapsed:.2f}s)")

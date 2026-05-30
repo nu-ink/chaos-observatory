@@ -394,14 +394,14 @@ def build_report(
     return "\n".join(lines)
 
 
-def main() -> int:
+def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--normalized-dir", default="data/normalized", help="Base directory for normalized partitions")
     ap.add_argument("--outdir", default="reports", help="Base output directory for reports")
     ap.add_argument("--end-date", default=None, help="End date (UTC) YYYY-MM-DD. Default: today (UTC)")
     ap.add_argument("--window-days", type=int, default=7, help="Report window length (days)")
     ap.add_argument("--baseline-days", type=int, default=7, help="Baseline window length (days). Set 0 to disable.")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     if args.window_days <= 0:
         raise SystemExit("ERROR: --window-days must be > 0")

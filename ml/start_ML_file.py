@@ -1,2 +1,1 @@
-just the start ... needing a ML scritp to tie everything together.
-
+"""Placeholder for future ML pipeline orchestration."""

@@ -355,7 +355,7 @@ def write_markdown(
     out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def main() -> int:
+def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--normalized-dir", default="data/normalized", help="Base normalized partition dir")
     ap.add_argument("--end-date", default=None, help="UTC end date YYYY-MM-DD (default: today UTC)")
@@ -372,7 +372,7 @@ def main() -> int:
     ap.add_argument("--smooth", type=float, default=0.5, help="Smoothing mass used in log_ratio")
     ap.add_argument("--per-source", action="store_true", help="Also compute drift per source_label")
     ap.add_argument("--md-out", default=None, help="Optional markdown output path")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     if args.window_days <= 0 or args.baseline_days <= 0:
         raise SystemExit("ERROR: window-days and baseline-days must be > 0")

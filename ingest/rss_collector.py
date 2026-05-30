@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import feedparser
+import requests
 import yaml
 
 
@@ -102,12 +103,11 @@ def normalize_entry_minimal(entry: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def fetch_feed(url: str, timeout_sec: int, user_agent: str) -> feedparser.FeedParserDict:
-    # feedparser supports request headers via its internal urllib;
-    # setting a global UA via feedparser.USER_AGENT is common practice.
+    headers = {"User-Agent": user_agent}
     feedparser.USER_AGENT = user_agent
-    parsed = feedparser.parse(url)
-    # If you need hard timeouts per request later, we can swap to requests + feedparser.parse(data)
-    return parsed
+    response = requests.get(url, headers=headers, timeout=timeout_sec)
+    response.raise_for_status()
+    return feedparser.parse(response.content)
 
 
 def write_jsonl(path: Path, rows: Iterable[Dict[str, Any]]) -> int:
@@ -120,13 +120,13 @@ def write_jsonl(path: Path, rows: Iterable[Dict[str, Any]]) -> int:
     return n
 
 
-def main() -> int:
+def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sources", default="ingest/sources.yaml", help="Path to sources.yaml")
     ap.add_argument("--outdir", default="data/raw", help="Base output directory for raw JSONL")
     ap.add_argument("--max-items", type=int, default=None, help="Override max_items_per_feed from YAML")
     ap.add_argument("--sleep", type=float, default=0.5, help="Sleep between feed fetches (seconds)")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     sources_path = Path(args.sources)
     if not sources_path.exists():
