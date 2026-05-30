@@ -1,105 +1,106 @@
+# Chaos Observatory
 
+Chaos Observatory is a text-only global signal observatory. It collects public RSS feeds, stores date-partitioned raw JSONL, normalizes those items into analysis-ready JSONL, and runs lightweight explainable analysis over recent windows.
 
-Chaos-Observatory
+**Chaos-Observatory** is an experimental global-signal intelligence platform designed to observe, correlate, and reason about cascading events across the world, from natural disasters to economic shocks, social unrest, and geopolitical consequences.
 
-**Chaos-Observatory** is an experimental global-signal intelligence platform designed to observe, correlate, and reason about cascading events across the world— from natural disasters to economic shocks, social unrest, and geopolitical consequences.
-
-It ingests heterogeneous data streams (news, RSS, seismic feeds, alerts), normalizes them into a unified timeline, and applies analytical models to detect **patterns of escalation, convergence, silence, and drift** across domains.
-
-> **Mission**
-> Detect early signals of chaos, track how events propagate across systems, and surface actionable insight before consequences fully unfold.
-
-
-What Chaos-Observatory Can Detect
+The current build is intentionally small and auditable. It is not a prediction engine; it is a pipeline for watching how public signals change across sources, regions, and topics.
 
 Examples of real-world signal chains:
 
-* Earthquake → Tsunami alert → Port shutdowns → Supply chain disruption
-* Cyberattack → Media silence → Financial volatility
-* Political unrest → Currency pressure → Capital flight
-* Disease outbreak → News saturation → Public fatigue → Silence risk
+- Earthquake -> Tsunami alert -> Port shutdowns -> Supply chain disruption
+- Cyberattack -> Media silence -> Financial volatility
+- Political unrest -> Currency pressure -> Capital flight
+- Disease outbreak -> News saturation -> Public fatigue -> Silence risk
 
-This system is *not predictive AI* (yet) — it is a signal observatory, designed for humans-in-the-loop analysis.
+## Current Build
 
+Implemented today:
 
+- RSS ingestion from `ingest/sources.yaml`
+- UTC date-partitioned raw output under `data/raw/YYYY-MM-DD/`
+- JSONL normalization with file or directory input
+- Analysis modules for frequency drift, topic convergence, silence detection, and sentiment shift
+- Markdown weekly report generation
+- Dry-run-first retention management for raw and normalized partitions
+- SQLite schema and helper wrapper in `storage/`
+- A hardened systemd service template in `systemd/`
+- Basic ingest/normalization tests
+- A working `run_pipeline.py` orchestrator for ingest, normalize, analysis, and report generation
 
-System Architecture (High Level)
+In progress or rough:
+
+- `run_15min.sh` is a lightweight shell helper for ingest, normalize, and frequency drift.
+- The ML folder is a placeholder.
+
+## System Architecture
 
 ```text
-        ┌────────────┐
-        │   Sources  │  (RSS, Feeds, Alerts)
-        └─────┬──────┘
-              │
-              ▼
-       ┌──────────────┐
-       │  Ingest Layer│  (`ingest/rss_collector.py`)
-       └─────┬────────┘
-         ▼
-         ┌─────────────────┐
-         │ Normalization   │  (`ingest/normalize.py`)
-         │ & Canonical Data│
-         └─────┬───────────┘
-           ▼
-         ┌─────────────────┐
-         │  Storage Layer  │  (SQLite / Postgres via `storage/db.py`)
-         └─────┬───────────┘
-           ▼
-       ┌───────────────────────┐
-       │ Analysis Engines      │  (in `analyze/`)
-       │ • Frequency Drift     │  (`analyze/frequency_drift.py`)
-       │ • Topic Convergence   │  (`analyze/topic_convergence.py`)
-       │ • Sentiment Shift     │  (`analyze/sentiment_shift.py`)
-       │ • Silence Detection   │  (`analyze/silence_detection.py`)
-       │ • Retention Decay     │  (`hold/retention.py`)
-       └─────┬─────────────────┘
-         ▼
-   ┌───────────────────────┐
-   │ Reports & Signals     │
-   │ (weekly, alerts, diffs)│
-   └───────────────────────┘
+        Sources
+   (RSS, Feeds, Alerts)
+          |
+          v
+     Ingest Layer
+ (`ingest/rss_collector.py`)
+          |
+          v
+     Normalization
+ (`ingest/normalize.py`)
+          |
+          v
+     Storage Layer
+ (`storage/db.py`, SQLite)
+          |
+          v
+     Analysis Engines
+       (`analyze/`)
+          |
+          v
+     Reports & Signals
 ```
 
-
-
-**Project Structure**
+## Repository Layout
 
 ```text
 chaos-observatory/
-├── ingest/                  # rss_collector.py, normalize.py, sources.yaml
-├── analyze/                 # analysis engines (frequency, topic, sentiment, silence)
-├── report/                  # weekly_report.py
-├── storage/                 # schema.sql, db.py
-├── config/                  # chaos.yaml
-├── hold/                    # retention and retention review notes
-├── systemd/                 # service unit (packaged, not installed)
-├── requirements.txt
-├── Pipfile
-├── README.md
-└── .venv/
+├── analyze/                  # Analysis engines
+│   ├── frequency_drift.py
+│   ├── topic_convergence.py
+│   ├── silence_detection.py
+│   └── sentiment_shift.py
+├── config/
+│   └── chaos.yaml            # Current configuration reference
+├── hold/
+│   └── retention.py          # Retention planning and apply mode
+├── ingest/
+│   ├── sources.yaml          # RSS source registry
+│   ├── rss_collector.py      # Public RSS ingestion
+│   └── normalize.py          # JSONL normalization
+├── report/
+│   └── weekly_report.py      # Markdown weekly report
+├── storage/
+│   ├── schema.sql            # SQLite-first schema
+│   ├── db.py                 # SQLite helper wrapper
+│   └── chaos.db              # Local database artifact, if present
+├── systemd/
+│   └── chaos-observatory.service.ini
+├── tests/
+│   └── test_ingest.py
+├── run_pipeline.py           # Pipeline orchestrator
+├── run_15min.sh              # Lightweight shell helper
+└── requirements.txt
 ```
 
+Runtime data is written to `data/` and `reports/`. Those directories may not exist until the first run and are not committed to the repository.
 
+## Requirements
 
-## ⚙️ Requirements
+- Python 3.11+
+- pip and venv
+- Network access for RSS feeds
+- SQLite for local storage helpers
 
-### System
-
-* **OS**: Ubuntu 22.04+ (24.04 LTS recommended)
-* **CPU**: x86_64 (ARM compatible with adjustments)
-* **RAM**: 8 GB minimum (16+ GB recommended)
-* **Disk**: 20 GB+ free
-
-### Software
-
-- **Python**: 3.11+ (3.12 also tested in dev environment)
-* **Database**:
-
-  * SQLite (default, local)
-  * PostgreSQL 15+ (recommended for scale)
-
-
-
-Python Environment Setup
+Install dependencies:
 
 ```bash
 python3.11 -m venv .venv
@@ -107,166 +108,163 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## Source Configuration
 
+RSS feeds live in `ingest/sources.yaml`.
 
-Configuration
+The current registry includes:
 
-### `config/chaos.yaml`
+- BBC News - World
+- US Federal Reserve press releases
+- European Central Bank press releases
+- ReliefWeb updates
 
-```yaml
-storage:
-  backend: sqlite
-  path: storage/chaos.db
+Each source has an `id`, display label, region, category, enabled flag, and one or more RSS feed URLs.
 
-ingest:
-  poll_interval_minutes: 15
+## Pipeline Run
 
-analysis:
-  sentiment_enabled: true
-  silence_threshold_hours: 48
-
-reporting:
-  weekly_day: Sunday
-```
-
-
-
-## Data Ingestion
-
-### Define Sources (`ingest/sources.yaml`)
-
-```yaml
-- name: USGS Earthquakes
-  type: rss
-  url: https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.atom
-
-- name: Global News
-  type: rss
-  url: https://feeds.bbci.co.uk/news/world/rss.xml
-```
-
-### Run Ingestion
+Run a full cycle from the repository root with the virtual environment activated:
 
 ```bash
-python ingest/rss_collector.py
+python run_pipeline.py
 ```
 
-By convention raw/normalized output is organized by date (for example `data/raw/YYYY-MM-DD` and `data/normalized/YYYY-MM-DD`). These `data/` directories are not committed to the repository — create them as needed or configure `config/chaos.yaml` to point to your storage paths.
+The runner collects RSS items, normalizes the current UTC day, runs analyzers, and writes a weekly report. Some analyzers may report `insufficient_docs` until enough baseline partitions exist.
 
+## Manual Run
 
-
-## Normalization
-
-Normalize **directories or individual files**:
+Set the UTC day used by the date-partitioned pipeline:
 
 ```bash
+DAY=$(date -u +%F)
+```
+
+Collect raw RSS items:
+
+```bash
+python ingest/rss_collector.py \
+  --sources ingest/sources.yaml \
+  --outdir data/raw
+```
+
+Normalize the current day:
+
+```bash
+mkdir -p "data/normalized/${DAY}"
 python ingest/normalize.py \
-  --in data/raw/2026-01-05 \
-  --out data/normalized/2026-01-05
+  --in "data/raw/${DAY}" \
+  --out "data/normalized/${DAY}"
 ```
 
-Outputs **JSONL canonical events**.
-
-
-
-## Analysis Engines
-
-### Frequency Drift
-
-Detects sudden increases or decreases in event volume.
-
-### Topic Convergence
-
-Identifies when unrelated domains begin sharing vocabulary.
-
-### Sentiment Shift
-
-Tracks emotional movement (neutral → alarm → panic).
-
-### Silence Detection
-
-Flags **dangerous absence of expected signals**.
-
-### Retention Decay
-
-Models how long topics persist before fading from discourse.
-
-Run all analysis (scripts live under `analyze/`, retention lives under `hold/`):
+Generate a weekly report:
 
 ```bash
-python analyze/frequency_drift.py
-python analyze/topic_convergence.py
-python analyze/sentiment_shift.py
-python analyze/silence_detection.py
-python hold/retention.py
+python report/weekly_report.py \
+  --normalized-dir data/normalized \
+  --outdir reports \
+  --window-days 7 \
+  --baseline-days 7
 ```
 
+The report is written to:
 
+```text
+reports/YYYY-MM-DD/weekly_report.md
+```
 
-## Reporting
+## Analysis Commands
 
-Generate a weekly intelligence summary:
+Each analyzer can be run independently against `data/normalized`.
 
 ```bash
-python report/weekly_report.py
+python analyze/frequency_drift.py --normalized-dir data/normalized
+python analyze/topic_convergence.py --normalized-dir data/normalized
+python analyze/silence_detection.py --normalized-dir data/normalized
+python analyze/sentiment_shift.py --normalized-dir data/normalized
 ```
 
-Output includes:
+Most analyzers support:
 
-* Notable escalations
-* Cross-domain convergence
-* Silence warnings
-* Emerging global narratives
+- `--end-date YYYY-MM-DD`
+- `--window-days N`
+- `--baseline-days N`
+- `--md-out path/to/output.md`
 
+Use `--help` on any analyzer for the full option list.
 
+## Retention
 
-## Run as a Service (systemd)
+Retention is dry-run by default.
+
+Preview retention decisions:
 
 ```bash
-# Copy and enable service (packaged unit file is in systemd/)
-sudo cp systemd/chaos-observatory.service.ini /etc/systemd/system/chaos-observatory.service
-sudo systemctl daemon-reexec
-sudo systemctl enable chaos-observatory
-sudo systemctl start chaos-observatory
+python hold/retention.py \
+  --raw-dir data/raw \
+  --normalized-dir data/normalized \
+  --hold-days 7 \
+  --keep-days 30
 ```
 
+Apply retention:
 
+```bash
+python hold/retention.py \
+  --raw-dir data/raw \
+  --normalized-dir data/normalized \
+  --hold-days 7 \
+  --keep-days 30 \
+  --apply
+```
 
-## Design Principles
+Archive instead of deleting old partitions:
 
-* **Human-in-the-Loop** (not autonomous decision-making)
-* **Explainable signals**
-* **Composable analytics**
-* **Low dependency surface**
-* **Data locality**
+```bash
+python hold/retention.py \
+  --raw-dir data/raw \
+  --normalized-dir data/normalized \
+  --hold-days 7 \
+  --keep-days 30 \
+  --archive-dir /path/to/archive \
+  --apply
+```
 
+## Database Layer
 
+`storage/schema.sql` defines a SQLite-first schema for:
 
-## Roadmap
+- pipeline runs
+- sources
+- raw items
+- normalized documents
+- analysis results
+- optional FTS5 document search
 
-* [ ] Event graph linking (cause → effect)
-* [ ] Geo-temporal clustering
-* [ ] LLM-assisted summarization (offline capable)
-* [ ] Alert thresholds & notifications
-* [ ] Multi-language ingestion
-* [ ] Dashboard UI
+`storage/db.py` provides a minimal SQLite wrapper with schema initialization, run tracking, source upserts, raw item inserts, document storage, and analysis result storage.
 
+The JSONL pipeline is currently the main runtime path. The database layer is present for the next build stage.
 
+## systemd
 
-## Disclaimer
+`systemd/chaos-observatory.service.ini` contains a hardened oneshot service template. It runs the manual pipeline shape directly:
 
-Chaos-Observatory is an **experimental research system**.
-It does not provide predictions, financial advice, or emergency alerts.
+1. collect RSS
+2. normalize current-day JSONL files
+3. generate a weekly report
+4. run retention in dry-run mode
 
-Use responsibly.
+Before installing it, update paths such as `WorkingDirectory`, `VIRTUAL_ENV`, and `ReadWritePaths` for the target machine.
 
+## Tests
 
+Run the current test suite with:
 
-##  Philosophy
+```bash
+pytest
+```
 
-> *“Chaos is rarely random. It only appears so when viewed in isolation.”*
+The tests currently focus on source loading, RSS item shaping, and normalization behavior.
 
+## Design Notes
 
-
-
-
+Chaos Observatory favors explainable, inspectable signals over opaque scoring. Current analysis is based on counts, term drift, TF-IDF convergence, source/region group comparisons, silence/dropout checks, and simple lexicon sentiment. Treat results as observational leads for human review, not conclusions.
