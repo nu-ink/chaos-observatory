@@ -76,6 +76,9 @@ chaos-observatory/
 │   ├── sources.yaml          # RSS source registry
 │   ├── rss_collector.py      # Public RSS ingestion
 │   └── normalize.py          # JSONL normalization
+├── ml/                       # Interpretable ML monitoring experiments
+│   ├── ml_change_detection.py
+│   └── ml_topic_convergence.py
 ├── report/
 │   └── weekly_report.py      # Markdown weekly report
 ├── storage/
@@ -191,6 +194,16 @@ Most analyzers support:
 - `--md-out path/to/output.md`
 
 Use `--help` on any analyzer for the full option list.
+
+## ML Commands
+
+ML modules are experimental monitoring algorithms and do not replace the
+deterministic analyzers under `analyze/`.
+
+```bash
+python ml/ml_change_detection.py --normalized-dir data/normalized
+python ml/ml_topic_convergence.py --normalized-dir data/normalized
+```
 
 ## Retention
 

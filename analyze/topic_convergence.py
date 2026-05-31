@@ -36,7 +36,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple, Set
+from typing import Dict, Iterable, List, Set
 
 # ---------- Stopwords (extend later) ----------
 STOPWORDS: Set[str] = {
@@ -119,9 +119,6 @@ STOPWORDS: Set[str] = {
     "your",
 }
 
-TOKEN_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9\-]{1,}")
-
-
 @dataclass(frozen=True)
 class Doc:
     group: str
@@ -188,20 +185,15 @@ def clean_text(s: str) -> str:
     return s
 
 
-def build_group_corpus(docs: List[Doc]) -> Tuple[List[str], List[str], Dict[str, int]]:
+def build_group_corpus(docs: List[Doc]) -> tuple[List[str], List[str]]:
     """
     Returns:
       groups: group names aligned with texts
       texts: one doc per original doc (not aggregated) so group mean is meaningful
-      group_index: map group->index for later use
     """
-    groups: List[str] = []
-    texts: List[str] = []
-    for d in docs:
-        groups.append(d.group)
-        texts.append(clean_text(f"{d.title} {d.body_text}"))
-    group_index: Dict[str, int] = {g: i for i, g in enumerate(sorted(set(groups)))}
-    return groups, texts, group_index
+    groups = [doc.group for doc in docs]
+    texts = [clean_text(f"{doc.title} {doc.body_text}") for doc in docs]
+    return groups, texts
 
 
 def cosine_similarity_dense(a, b) -> float:
@@ -324,7 +316,7 @@ def main(argv=None) -> int:
         print(json.dumps(out, ensure_ascii=False))
         return 2
 
-    groups_list, texts, _ = build_group_corpus(filtered_docs)
+    groups_list, texts = build_group_corpus(filtered_docs)
 
     # Vectorize documents
     vectorizer = TfidfVectorizer(
@@ -362,17 +354,19 @@ def main(argv=None) -> int:
 
     # Pairwise cosine similarities
     pair_rank: List[dict] = []
-    sims: List[float] = []
     for i in range(len(groups_sorted)):
         for j in range(i + 1, len(groups_sorted)):
             a = groups_sorted[i]
             b = groups_sorted[j]
             cos = cosine_similarity_dense(dense_vecs[a], dense_vecs[b])
-            sims.append(cos)
             pair_rank.append({"a": a, "b": b, "cosine": cos})
 
     pair_rank.sort(key=lambda r: r["cosine"], reverse=True)
-    convergence_score = float(sum(sims) / len(sims)) if sims else 0.0
+    convergence_score = (
+        sum(pair["cosine"] for pair in pair_rank) / len(pair_rank)
+        if pair_rank
+        else 0.0
+    )
 
     # Convergent terms:
     # For each group, take its top-K terms by TF-IDF weight, then count term coverage across groups.
