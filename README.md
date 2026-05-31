@@ -1,107 +1,145 @@
 # Chaos Observatory
 
-Chaos Observatory is a text-only global signal observatory. It collects public RSS feeds, stores date-partitioned raw JSONL, normalizes those items into analysis-ready JSONL, and runs lightweight explainable analysis over recent windows.
+Chaos Observatory is a text-only global signal observatory. It collects public RSS feeds, stores raw and normalized records by UTC day, runs explainable analysis over recent windows, and is gradually adding machine-learning helpers for anomaly detection, semantic linking, and tone monitoring.
 
-**Chaos-Observatory** is an experimental global-signal intelligence platform designed to observe, correlate, and reason about cascading events across the world, from natural disasters to economic shocks, social unrest, and geopolitical consequences.
+The project is intentionally small and inspectable. It is not a prediction engine. The current build is designed to answer:
 
-The current build is intentionally small and auditable. It is not a prediction engine; it is a pipeline for watching how public signals change across sources, regions, and topics.
+- What public signals changed?
+- Which sources, regions, or topics are moving together?
+- Which signals went quiet?
+- Which tone or volume shifts deserve human review?
 
-Examples of real-world signal chains:
+Example signal chains the system is meant to observe:
 
-- Earthquake -> Tsunami alert -> Port shutdowns -> Supply chain disruption
-- Cyberattack -> Media silence -> Financial volatility
-- Political unrest -> Currency pressure -> Capital flight
-- Disease outbreak -> News saturation -> Public fatigue -> Silence risk
+- Earthquake -> tsunami alert -> port shutdowns -> supply chain disruption
+- Cyberattack -> media silence -> financial volatility
+- Political unrest -> currency pressure -> capital flight
+- Disease outbreak -> news saturation -> public fatigue -> silence risk
 
-## Current Build
+## Build Status
 
-Implemented today:
+The working build has four layers:
 
-- RSS ingestion from `ingest/sources.yaml`
-- UTC date-partitioned raw output under `data/raw/YYYY-MM-DD/`
-- JSONL normalization with file or directory input
-- Analysis modules for frequency drift, topic convergence, silence detection, and sentiment shift
-- Markdown weekly report generation
-- Dry-run-first retention management for raw and normalized partitions
-- SQLite schema and helper wrapper in `storage/`
-- A hardened systemd service template in `systemd/`
-- Basic ingest/normalization tests
-- A working `run_pipeline.py` orchestrator for ingest, normalize, analysis, and report generation
+1. **Collection and normalization**
+   - RSS ingestion from `ingest/sources.yaml`
+   - Raw JSONL output under `data/raw/YYYY-MM-DD/`
+   - Normalized JSONL output under `data/normalized/YYYY-MM-DD/`
 
-In progress or rough:
+2. **Deterministic analysis**
+   - Frequency drift
+   - Topic convergence
+   - Silence detection
+   - Sentiment shift
+   - Markdown weekly reports
 
-- `run_15min.sh` is a lightweight shell helper for ingest, normalize, and frequency drift.
-- The ML folder is a placeholder.
+3. **Storage and operations**
+   - SQLite schema in `storage/schema.sql`
+   - SQLite helper wrapper in `storage/db.py`
+   - Retention planning in `hold/retention.py`
+   - `systemd` service template
+   - `run_pipeline.py` orchestration
 
-## System Architecture
+4. **ML experiments**
+   - Change-point detection with `ruptures`
+   - Semantic embeddings with `sentence-transformers`
+   - FAISS vector-store helpers
+   - Semantic article linking
+   - ML-ready tone/sentiment shift script
+   - Evaluation and threshold helpers
+
+The ML layer is now functional enough for basic validation, but it is still experimental. The deterministic `analyze/` layer remains the main observatory path.
+
+## Architecture
 
 ```text
-        Sources
-   (RSS, Feeds, Alerts)
-          |
-          v
-     Ingest Layer
- (`ingest/rss_collector.py`)
-          |
-          v
-     Normalization
- (`ingest/normalize.py`)
-          |
-          v
-     Storage Layer
- (`storage/db.py`, SQLite)
-          |
-          v
-     Analysis Engines
-       (`analyze/`)
-          |
-          v
-     Reports & Signals
+      Public Sources
+   (RSS feeds, alerts)
+            |
+            v
+       Ingest Layer
+  ingest/rss_collector.py
+            |
+            v
+      Normalization
+    ingest/normalize.py
+            |
+            v
+   Date-Partitioned JSONL
+ data/raw + data/normalized
+            |
+            v
+   Explainable Analyzers
+        analyze/
+            |
+            v
+    Reports and Signals
+        report/
+
+Optional/Next Layer:
+
+ normalized data / SQLite documents
+            |
+            v
+       ML Helpers
+          ml/
+            |
+            v
+ semantic links, anomaly alerts,
+ tone shifts, review artifacts
 ```
 
-## Repository Layout
+## Repository Structure
 
 ```text
 chaos-observatory/
-├── analyze/                  # Analysis engines
+├── analyze/                     # Deterministic, explainable analyzers
 │   ├── frequency_drift.py
 │   ├── topic_convergence.py
 │   ├── silence_detection.py
 │   └── sentiment_shift.py
 ├── config/
-│   └── chaos.yaml            # Current configuration reference
+│   └── chaos.yaml               # Runtime and analysis configuration
 ├── hold/
-│   └── retention.py          # Retention planning and apply mode
+│   └── retention.py             # Dry-run-first retention planning
 ├── ingest/
-│   ├── sources.yaml          # RSS source registry
-│   ├── rss_collector.py      # Public RSS ingestion
-│   └── normalize.py          # JSONL normalization
-├── ml/                       # Interpretable ML monitoring experiments
+│   ├── sources.yaml             # RSS source registry
+│   ├── rss_collector.py         # Feed collection
+│   └── normalize.py             # Raw JSONL -> normalized JSONL
+├── ml/                          # Experimental ML monitoring components
 │   ├── ml_change_detection.py
-│   └── ml_topic_convergence.py
+│   ├── ml_embeddings.py
+│   ├── ml_evaluation.py
+│   ├── ml_semantic_linker.py
+│   ├── ml_sentiment_shift.py
+│   ├── ml_similarity_thresholds.py
+│   ├── ml_topic_convergence.py
+│   └── vector_store.py
 ├── report/
-│   └── weekly_report.py      # Markdown weekly report
+│   └── weekly_report.py         # Markdown report generation
+├── scripts/
+│   └── run_semantic_linker_demo.py
 ├── storage/
-│   ├── schema.sql            # SQLite-first schema
-│   ├── db.py                 # SQLite helper wrapper
-│   └── chaos.db              # Local database artifact, if present
+│   ├── schema.sql               # SQLite-first schema
+│   ├── db.py                    # SQLite helper wrapper
+│   └── chaos.db                 # Local SQLite artifact, if present
 ├── systemd/
 │   └── chaos-observatory.service.ini
-├── tests/
-│   └── test_ingest.py
-├── run_pipeline.py           # Pipeline orchestrator
-├── run_15min.sh              # Lightweight shell helper
-└── requirements.txt
+├── tests/                       # Pytest coverage for ingest, ML helpers, and analyzers
+├── run_pipeline.py              # Full ingest -> normalize -> analyze -> report runner
+├── run_15min.sh                 # Lightweight shell helper
+├── requirements.txt             # Runtime dependencies
+└── pyproject.toml               # Project/test metadata
 ```
 
-Runtime data is written to `data/` and `reports/`. Those directories may not exist until the first run and are not committed to the repository.
+Runtime data is written under `data/`, `reports/`, and selected ML output paths. Those paths are operational artifacts rather than core source code.
 
 ## Requirements
 
 - Python 3.11+
 - pip and venv
-- Network access for RSS feeds
-- SQLite for local storage helpers
+- Network access for RSS ingestion
+- Network access for first-time model/dependency downloads
+- SQLite
 
 Install dependencies:
 
@@ -111,32 +149,57 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+Important ML dependencies include:
+
+- `scikit-learn`
+- `ruptures`
+- `sentence-transformers`
+- `faiss-cpu`
+- `numpy`
+- `pandas`
+
 ## Source Configuration
 
 RSS feeds live in `ingest/sources.yaml`.
 
-The current registry includes:
+Current source families include:
 
 - BBC News - World
 - US Federal Reserve press releases
 - European Central Bank press releases
 - ReliefWeb updates
 
-Each source has an `id`, display label, region, category, enabled flag, and one or more RSS feed URLs.
+Each source declares an ID, label, region, category, enabled flag, and feed URLs.
 
-## Pipeline Run
+Project-level settings live in `config/chaos.yaml`, including:
 
-Run a full cycle from the repository root with the virtual environment activated:
+- data paths
+- analysis windows
+- analyzer thresholds
+- report settings
+- semantic similarity settings
+- retention defaults
+
+## Running The Pipeline
+
+Run a full cycle from the repository root:
 
 ```bash
 python run_pipeline.py
 ```
 
-The runner collects RSS items, normalizes the current UTC day, runs analyzers, and writes a weekly report. Some analyzers may report `insufficient_docs` until enough baseline partitions exist.
+The runner performs:
 
-## Manual Run
+1. RSS ingest
+2. normalization for the current UTC day
+3. deterministic analysis
+4. weekly report generation
 
-Set the UTC day used by the date-partitioned pipeline:
+Some analyzers may return `insufficient_docs` until enough baseline partitions exist.
+
+## Manual Pipeline
+
+Set the UTC day:
 
 ```bash
 DAY=$(date -u +%F)
@@ -169,15 +232,9 @@ python report/weekly_report.py \
   --baseline-days 7
 ```
 
-The report is written to:
-
-```text
-reports/YYYY-MM-DD/weekly_report.md
-```
-
 ## Analysis Commands
 
-Each analyzer can be run independently against `data/normalized`.
+Run deterministic analyzers independently:
 
 ```bash
 python analyze/frequency_drift.py --normalized-dir data/normalized
@@ -186,24 +243,97 @@ python analyze/silence_detection.py --normalized-dir data/normalized
 python analyze/sentiment_shift.py --normalized-dir data/normalized
 ```
 
-Most analyzers support:
+Common options include:
 
 - `--end-date YYYY-MM-DD`
 - `--window-days N`
 - `--baseline-days N`
-- `--md-out path/to/output.md`
+- `--md-out path/to/report.md`
 
-Use `--help` on any analyzer for the full option list.
+Use `--help` on any analyzer for exact options.
 
-## ML Commands
+## ML Components
 
-ML modules are experimental monitoring algorithms and do not replace the
-deterministic analyzers under `analyze/`.
+The `ml/` directory is a connected experimental layer. It does not replace `analyze/`; it adds monitoring and semantic tools that can mature into a later ML pipeline.
+
+### Change Detection
+
+Reads normalized JSONL partitions and detects source/topic count changes.
 
 ```bash
-python ml/ml_change_detection.py --normalized-dir data/normalized
-python ml/ml_topic_convergence.py --normalized-dir data/normalized
+python ml/ml_change_detection.py \
+  --normalized-dir data/normalized \
+  --end-date 2026-05-30 \
+  --csv-out /tmp/ml_change_alerts.csv
 ```
+
+### Topic Convergence
+
+Reads SQLite records from the `documents`, `articles`, or `normalized_items` table, embeds text, clusters documents, and writes a Markdown report.
+
+```bash
+python ml/ml_topic_convergence.py \
+  --db storage/chaos.db \
+  --since 2026-05-30 \
+  --output /tmp/ml_topic_report.md
+```
+
+If `storage/chaos.db` has no documents, the command exits cleanly with a no-records message.
+
+### Semantic Linking
+
+The semantic linker combines:
+
+- `ml/ml_embeddings.py`
+- `ml/vector_store.py`
+- `ml/ml_similarity_thresholds.py`
+- `ml/ml_semantic_linker.py`
+
+It is designed to embed articles, store vectors in FAISS, classify similarity scores, and export human review CSVs.
+
+Demo script:
+
+```bash
+python scripts/run_semantic_linker_demo.py
+```
+
+The first run may download a sentence-transformer model and write FAISS/database artifacts under configured paths.
+
+### Sentiment / Tone Shift
+
+The ML-ready sentiment shift script reads CSV or JSON, scores tone with domain lexicons, detects source/topic tone shifts, and writes JSON plus Markdown output.
+
+```bash
+python ml/ml_sentiment_shift.py \
+  --input path/to/articles.csv \
+  --scores-output /tmp/sentiment_scores.json \
+  --alerts-output /tmp/tone_shift_alerts.json \
+  --report-output /tmp/sentiment_shift_report.md
+```
+
+Expected input fields:
+
+- `article_id`
+- `source`
+- `topic`
+- `title`
+- `text`
+- `published_at`
+
+## Database Layer
+
+`storage/schema.sql` defines a SQLite-first schema for:
+
+- pipeline runs
+- sources
+- raw items
+- normalized documents
+- analysis results
+- optional FTS5 document search
+
+`storage/db.py` provides helper methods for schema initialization, run tracking, source upserts, raw item storage, normalized document storage, and analysis result storage.
+
+The JSONL pipeline is still the main runtime path. The SQLite layer is available for the ML and persistence build-out.
 
 ## Retention
 
@@ -230,7 +360,7 @@ python hold/retention.py \
   --apply
 ```
 
-Archive instead of deleting old partitions:
+Archive instead of deleting:
 
 ```bash
 python hold/retention.py \
@@ -242,42 +372,60 @@ python hold/retention.py \
   --apply
 ```
 
-## Database Layer
+## Tests And Validation
 
-`storage/schema.sql` defines a SQLite-first schema for:
-
-- pipeline runs
-- sources
-- raw items
-- normalized documents
-- analysis results
-- optional FTS5 document search
-
-`storage/db.py` provides a minimal SQLite wrapper with schema initialization, run tracking, source upserts, raw item inserts, document storage, and analysis result storage.
-
-The JSONL pipeline is currently the main runtime path. The database layer is present for the next build stage.
-
-## systemd
-
-`systemd/chaos-observatory.service.ini` contains a hardened oneshot service template. It runs the manual pipeline shape directly:
-
-1. collect RSS
-2. normalize current-day JSONL files
-3. generate a weekly report
-4. run retention in dry-run mode
-
-Before installing it, update paths such as `WorkingDirectory`, `VIRTUAL_ENV`, and `ReadWritePaths` for the target machine.
-
-## Tests
-
-Run the current test suite with:
+Run the full test suite:
 
 ```bash
 pytest
 ```
 
-The tests currently focus on source loading, RSS item shaping, and normalization behavior.
+Current coverage includes:
 
-## Design Notes
+- source loading
+- RSS item shaping
+- normalization
+- ML change detection helpers
+- ML topic convergence database loading
+- embedding text construction
+- vector-store add/search
+- similarity threshold classification
+- evaluation metrics
+- ML sentiment shift scoring and CLI output
 
-Chaos Observatory favors explainable, inspectable signals over opaque scoring. Current analysis is based on counts, term drift, TF-IDF convergence, source/region group comparisons, silence/dropout checks, and simple lexicon sentiment. Treat results as observational leads for human review, not conclusions.
+Useful validation commands:
+
+```bash
+python -m py_compile ml/*.py
+python -m pytest
+python -c "import ml; import ml.ml_change_detection; import ml.ml_topic_convergence; import ml.ml_embeddings; import ml.ml_evaluation; import ml.ml_semantic_linker; import ml.ml_sentiment_shift; import ml.ml_similarity_thresholds; import ml.vector_store; print('all-ml-imports-ok')"
+```
+
+## Operational Notes
+
+`systemd/chaos-observatory.service.ini` is a hardened oneshot service template. Before installing it, update machine-specific paths such as:
+
+- `WorkingDirectory`
+- `VIRTUAL_ENV`
+- `ReadWritePaths`
+
+`run_15min.sh` is a lightweight helper for short-interval local runs.
+
+## Design Direction
+
+Chaos Observatory favors explainable, inspectable signals before opaque modeling.
+
+Near-term direction:
+
+- Keep deterministic analyzers stable and auditable.
+- Use ML for monitoring, similarity, clustering, and review assistance.
+- Keep humans in the loop for labels, thresholds, and validation.
+- Promote ML modules into the main pipeline only after they have reliable data contracts and tests.
+
+The current shape is best understood as:
+
+```text
+deterministic observatory first
+ML-assisted review second
+prediction claims never implied
+```
