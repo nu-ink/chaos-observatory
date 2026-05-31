@@ -10,6 +10,7 @@ numpy>=1.26.4
 pandas>=2.2.2
 scipy>=1.13.1
 scikit-learn>=1.5.0
+faiss-cpu>=1.8.0
 ruptures>=1.1.9
 sentence-transformers>=3.0.1
 

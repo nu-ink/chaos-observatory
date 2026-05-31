@@ -132,3 +132,15 @@ scheduling:
     enabled: false
     hour: 3
     minute: 0
+
+
+semantic_similarity:
+  enabled: true
+  model_name: sentence-transformers/all-MiniLM-L6-v2
+  top_k: 5
+  duplicate_threshold: 0.90
+  near_duplicate_threshold: 0.80
+  related_context_threshold: 0.65
+  index_path: data/vector_index/semantic_articles.faiss
+  database_path: data/chaos_observatory.db
+  review_output_path: reports/semantic_review.csv

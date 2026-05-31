@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chaos-observatory"
+version = "0.1.0"
+description = "Machine-learning helpers for Chaos Observatory"
+requires-python = ">=3.11"
+dependencies = [
+  "faiss-cpu>=1.8.0",
+  "numpy>=1.26.0",
+  "pandas>=2.2.2",
+  "ruptures>=1.1.9",
+  "scikit-learn>=1.5.0",
+  "sentence-transformers>=3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
