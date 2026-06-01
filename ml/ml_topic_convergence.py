@@ -554,6 +554,11 @@ def write_markdown_report(
 
 def run(args: argparse.Namespace) -> None:
     """Main execution flow."""
+    if args.dry_run:
+        payload = run_dry_run()
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return
+
     db_path = Path(args.db)
     report_path = Path(args.output)
 
@@ -608,10 +613,72 @@ def run(args: argparse.Namespace) -> None:
     print(f"Clusters: {len(summaries)}")
 
 
-def parse_args() -> argparse.Namespace:
+def run_dry_run() -> dict[str, Any]:
+    with sqlite3.connect(":memory:") as conn:
+        conn.execute(
+            """
+            CREATE TABLE documents (
+                doc_id TEXT PRIMARY KEY,
+                normalized_at_utc TEXT NOT NULL,
+                ingested_at_utc TEXT,
+                published_at_utc TEXT,
+                source_id TEXT NOT NULL,
+                source_label TEXT,
+                region TEXT,
+                category TEXT,
+                feed_url TEXT,
+                url TEXT,
+                title TEXT,
+                body_text TEXT,
+                raw_json TEXT
+            )
+            """
+        )
+        conn.execute(
+            """
+            INSERT INTO documents (
+                doc_id,
+                normalized_at_utc,
+                published_at_utc,
+                source_id,
+                source_label,
+                url,
+                title,
+                body_text
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "health-doc-1",
+                "2026-06-01T00:00:00Z",
+                "2026-06-01T00:00:00Z",
+                "health",
+                "Health Check",
+                "https://example.test/health",
+                "Health check topic convergence",
+                "A short semantic clustering smoke record for preflight validation.",
+            ),
+        )
+        records = load_records(conn, "2026-06-01")
+
+    return {
+        "status": "ok",
+        "event": "ml_topic_convergence_dry_run",
+        "records": len(records),
+        "text_ready": bool(not records.empty and records.iloc[0]["text"]),
+    }
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
         description="Run topic discovery and convergence monitoring."
+    )
+
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Run a built-in non-destructive smoke test without embeddings.",
     )
 
     parser.add_argument(
@@ -659,7 +726,7 @@ def parse_args() -> argparse.Namespace:
         help="HDBSCAN min_samples. Defaults to same behavior as min_cluster_size.",
     )
 
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 if __name__ == "__main__":

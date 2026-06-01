@@ -319,6 +319,7 @@ def save_alerts_csv(alerts_df: pd.DataFrame, output_path: str | Path) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Detect source/topic change points in normalized events.")
+    parser.add_argument("--dry-run", action="store_true", help="Run a built-in non-destructive smoke test")
     parser.add_argument("--normalized-dir", default="data/normalized", help="Date-partitioned normalized JSONL root")
     parser.add_argument("--input-csv", help="Optional CSV with timestamp, source, topic columns")
     parser.add_argument("--csv-out", help="Optional CSV path for alert output")
@@ -335,11 +336,41 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def run_dry_run() -> dict:
+    events = normalize_events_frame(
+        pd.DataFrame(
+            [
+                {"timestamp": "2026-05-01T00:00:00Z", "source": "health", "topic": "smoke"},
+                {"timestamp": "2026-05-02T00:00:00Z", "source": "health", "topic": "smoke"},
+                {"timestamp": "2026-05-03T00:00:00Z", "source": "health", "topic": "smoke"},
+                {"timestamp": "2026-05-04T00:00:00Z", "source": "health", "topic": "smoke"},
+            ]
+        )
+    )
+    counts = aggregate_counts(events, bucket_size="1D")
+    alerts = detect_change_points(
+        counts_df=counts,
+        bucket_size="1D",
+        min_series_points=2,
+        min_segment_size=1,
+    )
+    return {
+        "status": "ok",
+        "event": "ml_change_detection_dry_run",
+        "events": len(events),
+        "count_rows": len(counts),
+        "alerts": len(alerts),
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
     try:
+        if args.dry_run:
+            print(json.dumps(run_dry_run(), indent=2, sort_keys=True))
+            return 0
         if args.input_csv:
             events = load_events_csv(args.input_csv)
         else:

@@ -561,8 +561,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
 
     parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Run a built-in non-destructive smoke test without writing files",
+    )
+
+    parser.add_argument(
         "--input",
-        required=True,
+        required=False,
         help="Path to input CSV or JSON file",
     )
 
@@ -601,8 +607,53 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def run_dry_run() -> dict[str, Any]:
+    articles = [
+        Article(
+            article_id="health-1",
+            source="health",
+            topic="smoke",
+            title="Routine status update",
+            text="Operations were stable and normal.",
+            published_at="2026-06-01T00:00:00Z",
+        ),
+        Article(
+            article_id="health-2",
+            source="health",
+            topic="smoke",
+            title="Emergency warning issued",
+            text="Officials reported a critical urgent crisis warning.",
+            published_at="2026-06-01T01:00:00Z",
+        ),
+        Article(
+            article_id="health-3",
+            source="health",
+            topic="smoke",
+            title="Evacuation alert expands",
+            text="Emergency teams warned of an urgent threat.",
+            published_at="2026-06-01T02:00:00Z",
+        ),
+    ]
+    scores = [score_article(article) for article in articles]
+    alerts = detect_tone_shifts(scores, min_articles=3, alert_threshold=0.1)
+    return {
+        "status": "ok",
+        "event": "ml_sentiment_shift_dry_run",
+        "articles": len(articles),
+        "scores": len(scores),
+        "alerts": len(alerts),
+    }
+
+
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
+
+    if args.dry_run:
+        print(json.dumps(run_dry_run(), indent=2, sort_keys=True))
+        return
+
+    if not args.input:
+        raise SystemExit("ERROR: --input is required unless --dry-run is set")
 
     input_path = Path(args.input)
     scores_output = Path(args.scores_output)
