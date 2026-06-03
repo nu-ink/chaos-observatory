@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Tuple
 
 DEFAULT_DB_PATH = "data/chaos_observatory.sqlite3"
+MAX_QUERY_LIMIT = 100000
 
 
 def utc_now_iso() -> str:
@@ -120,7 +121,9 @@ class DB:
                 in_fts = False
         return "\n".join(out)
 
-    def _exec_with_retry(self, conn: sqlite3.Connection, query: str, params: Sequence[Any] = ()) -> sqlite3.Cursor:
+    def _exec_with_retry(
+        self, conn: sqlite3.Connection, query: str, params: Sequence[Any] = ()
+    ) -> sqlite3.Cursor:
         last_err: Optional[Exception] = None
         for _ in range(self.cfg.busy_retries):
             try:
@@ -137,7 +140,9 @@ class DB:
     # ----------------------------
     # Runs
     # ----------------------------
-    def run_start(self, mode: str, config_path: Optional[str] = None, notes: Optional[str] = None) -> str:
+    def run_start(
+        self, mode: str, config_path: Optional[str] = None, notes: Optional[str] = None
+    ) -> str:
         run_id = sha256_hex(mode, utc_now_iso(), str(os.getpid()))
         with self.transaction() as conn:
             self._exec_with_retry(
@@ -185,7 +190,16 @@ class DB:
                   enabled=excluded.enabled,
                   updated_at_utc=excluded.updated_at_utc
                 """,
-                (source_id, label, region, category, feed_url, 1 if enabled else 0, now, now),
+                (
+                    source_id,
+                    label,
+                    region,
+                    category,
+                    feed_url,
+                    1 if enabled else 0,
+                    now,
+                    now,
+                ),
             )
 
     # ----------------------------
@@ -249,7 +263,11 @@ class DB:
         raw_json_obj: Optional[Dict[str, Any]] = None,
         write_fts: bool = True,
     ) -> None:
-        raw_json = json.dumps(raw_json_obj, ensure_ascii=False) if raw_json_obj is not None else None
+        raw_json = (
+            json.dumps(raw_json_obj, ensure_ascii=False)
+            if raw_json_obj is not None
+            else None
+        )
 
         with self.transaction() as conn:
             self._exec_with_retry(
@@ -302,7 +320,14 @@ class DB:
                         INSERT INTO documents_fts(doc_id, title, body_text, source_label, region, category)
                         VALUES (?, ?, ?, ?, ?, ?)
                         """,
-                        (doc_id, title or "", body_text or "", source_label or "", region or "", category or ""),
+                        (
+                            doc_id,
+                            title or "",
+                            body_text or "",
+                            source_label or "",
+                            region or "",
+                            category or "",
+                        ),
                     )
                 except sqlite3.OperationalError:
                     # FTS table missing (disabled) — that's fine.
@@ -323,23 +348,41 @@ class DB:
         published_start_utc / end_utc should be ISO or YYYY-MM-DD boundaries in UTC.
         """
         conn = self.connect()
-        where = ["published_at_utc IS NOT NULL", "published_at_utc >= ?", "published_at_utc <= ?"]
+
+        # Validate and cap the limit to avoid expensive queries
+        try:
+            limit = int(limit)
+        except Exception:
+            raise ValueError("limit must be an integer")
+        if limit < 0:
+            raise ValueError("limit must be >= 0")
+        if limit > MAX_QUERY_LIMIT:
+            limit = MAX_QUERY_LIMIT
+
+        # Build a parameterized WHERE clause from a set of known-safe conditions.
+        where_clauses: List[str] = [
+            "published_at_utc IS NOT NULL",
+            "published_at_utc >= ?",
+            "published_at_utc <= ?",
+        ]
         params: List[Any] = [published_start_utc, published_end_utc]
 
-        if region:
-            where.append("region = ?")
+        if region is not None:
+            # only append a fixed condition and pass the value as a parameter
+            where_clauses.append("region = ?")
             params.append(region)
-        if source_id:
-            where.append("source_id = ?")
+        if source_id is not None:
+            where_clauses.append("source_id = ?")
             params.append(source_id)
 
-        q = f"""
-        SELECT doc_id, published_at_utc, source_id, source_label, region, category, url, title, body_text
-        FROM documents
-        WHERE {' AND '.join(where)}
-        ORDER BY published_at_utc ASC
-        LIMIT ?
-        """
+        where_sql = " AND ".join(where_clauses)
+
+        q = (
+            "SELECT doc_id, published_at_utc, source_id, source_label, region, category, url, title, body_text "
+            "FROM documents "
+            "WHERE " + where_sql + " ORDER BY published_at_utc ASC LIMIT ?"
+        )
+
         params.append(limit)
 
         cur = self._exec_with_retry(conn, q, params)

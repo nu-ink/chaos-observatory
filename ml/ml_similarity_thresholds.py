@@ -22,7 +22,9 @@ class SemanticSimilarityConfig:
             self.duplicate_threshold,
         )
         if not (0.0 <= thresholds[0] <= thresholds[1] <= thresholds[2] <= 1.0):
-            raise ValueError("Thresholds must satisfy 0 <= related <= near <= duplicate <= 1.")
+            raise ValueError(
+                "Thresholds must satisfy 0 <= related <= near <= duplicate <= 1."
+            )
         if self.top_k <= 0:
             raise ValueError("top_k must be > 0.")
 

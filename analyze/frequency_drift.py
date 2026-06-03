@@ -36,7 +36,6 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Set, Tuple
 
-
 # ----------------------------
 # Stopwords (v1; extend later)
 # ----------------------------
@@ -162,7 +161,9 @@ def load_docs(base_dir: Path, start_day: datetime, end_day: datetime) -> List[Do
                 for row in read_jsonl(f):
                     docs.append(
                         Doc(
-                            source_label=row.get("source_label") or row.get("source_id") or "unknown",
+                            source_label=row.get("source_label")
+                            or row.get("source_id")
+                            or "unknown",
                             title=row.get("title") or "",
                             body_text=row.get("body_text") or "",
                         )
@@ -183,7 +184,7 @@ def ngrams(tokens: Sequence[str], n: int) -> List[str]:
         return list(tokens)
     out: List[str] = []
     for i in range(0, len(tokens) - n + 1):
-        out.append(" ".join(tokens[i:i+n]))
+        out.append(" ".join(tokens[i : i + n]))
     return out
 
 
@@ -217,7 +218,9 @@ def build_counts(
 
     total_terms = 0
     for d in docs:
-        toks = tokenize(d.title + " " + d.body_text, stopwords=stopwords, min_len=min_token_len)
+        toks = tokenize(
+            d.title + " " + d.body_text, stopwords=stopwords, min_len=min_token_len
+        )
         doc_terms_in_doc: Set[str] = set()
 
         for n in ngram_list:
@@ -319,8 +322,12 @@ def write_markdown(
     lines.append("# Chaos Observatory — Frequency Drift")
     lines.append("")
     lines.append(f"**Generated (UTC):** {meta['generated_at_utc']}")
-    lines.append(f"**Current window (UTC):** {meta['current_start']} → {meta['current_end']}  ")
-    lines.append(f"**Baseline window (UTC):** {meta['baseline_start']} → {meta['baseline_end']}")
+    lines.append(
+        f"**Current window (UTC):** {meta['current_start']} → {meta['current_end']}  "
+    )
+    lines.append(
+        f"**Baseline window (UTC):** {meta['baseline_start']} → {meta['baseline_end']}"
+    )
     lines.append("")
     lines.append("## Summary")
     lines.append("")
@@ -344,7 +351,9 @@ def write_markdown(
     lines.append("")
     lines.append("## Silence Indicators")
     lines.append("")
-    lines.append("> Terms with meaningful baseline presence that are absent in the current window.")
+    lines.append(
+        "> Terms with meaningful baseline presence that are absent in the current window."
+    )
     lines.append("")
     lines.append("| Term | base_count | base_df |")
     lines.append("|---|---:|---:|")
@@ -357,20 +366,61 @@ def write_markdown(
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--normalized-dir", default="data/normalized", help="Base normalized partition dir")
-    ap.add_argument("--end-date", default=None, help="UTC end date YYYY-MM-DD (default: today UTC)")
-    ap.add_argument("--window-days", type=int, default=7, help="Current window length in days")
-    ap.add_argument("--baseline-days", type=int, default=7, help="Baseline window length in days")
+    ap.add_argument(
+        "--normalized-dir",
+        default="data/normalized",
+        help="Base normalized partition dir",
+    )
+    ap.add_argument(
+        "--end-date", default=None, help="UTC end date YYYY-MM-DD (default: today UTC)"
+    )
+    ap.add_argument(
+        "--window-days", type=int, default=7, help="Current window length in days"
+    )
+    ap.add_argument(
+        "--baseline-days", type=int, default=7, help="Baseline window length in days"
+    )
     ap.add_argument("--ngrams", default="1,2", help="Comma list: 1,2 or 1 or 2 (max 4)")
-    ap.add_argument("--min-token-len", type=int, default=3, help="Minimum token length for unigrams")
-    ap.add_argument("--min-cur", type=int, default=8, help="Minimum current count for a term to be ranked")
-    ap.add_argument("--min-df", type=int, default=3, help="Minimum current document frequency for ranking")
-    ap.add_argument("--min-docs", type=int, default=10, help="Require at least this many docs per window")
+    ap.add_argument(
+        "--min-token-len", type=int, default=3, help="Minimum token length for unigrams"
+    )
+    ap.add_argument(
+        "--min-cur",
+        type=int,
+        default=8,
+        help="Minimum current count for a term to be ranked",
+    )
+    ap.add_argument(
+        "--min-df",
+        type=int,
+        default=3,
+        help="Minimum current document frequency for ranking",
+    )
+    ap.add_argument(
+        "--min-docs",
+        type=int,
+        default=10,
+        help="Require at least this many docs per window",
+    )
     ap.add_argument("--top", type=int, default=40, help="How many risers to return")
-    ap.add_argument("--silence-top", type=int, default=20, help="How many silence indicators to return")
-    ap.add_argument("--silence-min-base", type=int, default=12, help="Minimum baseline count to consider for silence")
-    ap.add_argument("--smooth", type=float, default=0.5, help="Smoothing mass used in log_ratio")
-    ap.add_argument("--per-source", action="store_true", help="Also compute drift per source_label")
+    ap.add_argument(
+        "--silence-top",
+        type=int,
+        default=20,
+        help="How many silence indicators to return",
+    )
+    ap.add_argument(
+        "--silence-min-base",
+        type=int,
+        default=12,
+        help="Minimum baseline count to consider for silence",
+    )
+    ap.add_argument(
+        "--smooth", type=float, default=0.5, help="Smoothing mass used in log_ratio"
+    )
+    ap.add_argument(
+        "--per-source", action="store_true", help="Also compute drift per source_label"
+    )
     ap.add_argument("--md-out", default=None, help="Optional markdown output path")
     args = ap.parse_args(argv)
 
@@ -398,15 +448,25 @@ def main(argv=None) -> int:
             "docs_current": len(docs_cur),
             "docs_baseline": len(docs_base),
             "min_docs": args.min_docs,
-            "current_window": {"start": day_to_partition(cur_start), "end": day_to_partition(end_day)},
-            "baseline_window": {"start": day_to_partition(base_start), "end": day_to_partition(base_end)},
+            "current_window": {
+                "start": day_to_partition(cur_start),
+                "end": day_to_partition(end_day),
+            },
+            "baseline_window": {
+                "start": day_to_partition(base_start),
+                "end": day_to_partition(base_end),
+            },
         }
         print(json.dumps(out, ensure_ascii=False))
         return 2
 
     # Global counts
-    cur_counts, cur_df, total_cur = build_counts(docs_cur, ngram_list, STOPWORDS, args.min_token_len)
-    base_counts, base_df, total_base = build_counts(docs_base, ngram_list, STOPWORDS, args.min_token_len)
+    cur_counts, cur_df, total_cur = build_counts(
+        docs_cur, ngram_list, STOPWORDS, args.min_token_len
+    )
+    base_counts, base_df, total_base = build_counts(
+        docs_base, ngram_list, STOPWORDS, args.min_token_len
+    )
 
     # Prior: pooled counts as informative prior (standard, robust)
     prior_counts = cur_counts + base_counts
@@ -521,13 +581,24 @@ def main(argv=None) -> int:
             if len(cur_docs) < args.min_docs or len(base_docs) < args.min_docs:
                 continue
 
-            s_cur_counts, s_cur_df, s_total_cur = build_counts(cur_docs, ngram_list, STOPWORDS, args.min_token_len)
-            s_base_counts, s_base_df, s_total_base = build_counts(base_docs, ngram_list, STOPWORDS, args.min_token_len)
+            s_cur_counts, s_cur_df, s_total_cur = build_counts(
+                cur_docs, ngram_list, STOPWORDS, args.min_token_len
+            )
+            s_base_counts, s_base_df, s_total_base = build_counts(
+                base_docs, ngram_list, STOPWORDS, args.min_token_len
+            )
 
             s_prior = s_cur_counts + s_base_counts
             s_total_prior = s_total_cur + s_total_base
 
-            s_z = log_odds_dirichlet(s_cur_counts, s_base_counts, s_prior, s_total_cur, s_total_base, s_total_prior)
+            s_z = log_odds_dirichlet(
+                s_cur_counts,
+                s_base_counts,
+                s_prior,
+                s_total_cur,
+                s_total_base,
+                s_total_prior,
+            )
             s_vocab = set(s_cur_counts.keys()) | set(s_base_counts.keys())
             s_vocab_size = max(len(s_vocab), 1)
 
@@ -538,7 +609,9 @@ def main(argv=None) -> int:
                 dfcur = int(s_cur_df.get(term, 0))
                 if ccur < args.min_cur or dfcur < args.min_df:
                     continue
-                lr = log_ratio_score(ccur, cbase, s_total_cur, s_total_base, args.smooth, s_vocab_size)
+                lr = log_ratio_score(
+                    ccur, cbase, s_total_cur, s_total_base, args.smooth, s_vocab_size
+                )
                 s_candidates.append(
                     {
                         "term": term,

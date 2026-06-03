@@ -12,14 +12,23 @@ def run(project_root: Path) -> list[dict]:
 
     try:
         _cfg, sources = load_sources_yaml(sources_path)
-        results.append(_result("sources yaml loads", bool(sources), f"{len(sources)} enabled sources"))
+        results.append(
+            _result(
+                "sources yaml loads", bool(sources), f"{len(sources)} enabled sources"
+            )
+        )
     except Exception as exc:
         results.append(_result("sources yaml loads", False, str(exc)))
 
     try:
         normalized = normalize_row(
             {
-                "source": {"id": "health", "label": "Health Source", "region": "global", "category": "test"},
+                "source": {
+                    "id": "health",
+                    "label": "Health Source",
+                    "region": "global",
+                    "category": "test",
+                },
                 "item": {
                     "title": "Health check item",
                     "link": "https://example.test/health",
@@ -34,7 +43,9 @@ def run(project_root: Path) -> list[dict]:
             and normalized["title"] == "Health check item"
             and normalized["body_text"] == "A minimal RSS item for normalization."
         )
-        results.append(_result("test RSS item normalizes", ok, normalized.get("title") or ""))
+        results.append(
+            _result("test RSS item normalizes", ok, normalized.get("title") or "")
+        )
     except Exception as exc:
         results.append(_result("test RSS item normalizes", False, str(exc)))
 

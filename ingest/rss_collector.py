@@ -102,7 +102,9 @@ def normalize_entry_minimal(entry: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def fetch_feed(url: str, timeout_sec: int, user_agent: str) -> feedparser.FeedParserDict:
+def fetch_feed(
+    url: str, timeout_sec: int, user_agent: str
+) -> feedparser.FeedParserDict:
     headers = {"User-Agent": user_agent}
     feedparser.USER_AGENT = user_agent
     response = requests.get(url, headers=headers, timeout=timeout_sec)
@@ -122,10 +124,21 @@ def write_jsonl(path: Path, rows: Iterable[Dict[str, Any]]) -> int:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sources", default="ingest/sources.yaml", help="Path to sources.yaml")
-    ap.add_argument("--outdir", default="data/raw", help="Base output directory for raw JSONL")
-    ap.add_argument("--max-items", type=int, default=None, help="Override max_items_per_feed from YAML")
-    ap.add_argument("--sleep", type=float, default=0.5, help="Sleep between feed fetches (seconds)")
+    ap.add_argument(
+        "--sources", default="ingest/sources.yaml", help="Path to sources.yaml"
+    )
+    ap.add_argument(
+        "--outdir", default="data/raw", help="Base output directory for raw JSONL"
+    )
+    ap.add_argument(
+        "--max-items",
+        type=int,
+        default=None,
+        help="Override max_items_per_feed from YAML",
+    )
+    ap.add_argument(
+        "--sleep", type=float, default=0.5, help="Sleep between feed fetches (seconds)"
+    )
     args = ap.parse_args(argv)
 
     sources_path = Path(args.sources)
@@ -159,7 +172,9 @@ def main(argv=None) -> int:
 
         for feed in src.feeds:
             try:
-                parsed = fetch_feed(feed.url, timeout_sec=timeout_sec, user_agent=user_agent)
+                parsed = fetch_feed(
+                    feed.url, timeout_sec=timeout_sec, user_agent=user_agent
+                )
 
                 if getattr(parsed, "bozo", False):
                     # bozo_exception is often non-fatal but indicates parsing issues
@@ -234,7 +249,11 @@ def main(argv=None) -> int:
 
     print(
         json.dumps(
-            {"event": "collector_done", "total_written": total_written, "ts_utc": _utc_now_iso()},
+            {
+                "event": "collector_done",
+                "total_written": total_written,
+                "ts_utc": _utc_now_iso(),
+            },
             ensure_ascii=False,
         )
     )
@@ -242,4 +261,4 @@ def main(argv=None) -> int:
 
 
 if __name__ == "__main__":
-   raise SystemExit(main())
+    raise SystemExit(main())

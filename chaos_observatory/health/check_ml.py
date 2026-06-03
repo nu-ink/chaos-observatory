@@ -6,7 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 ML_MODULES = [
     "ml",
     "ml.ml_change_detection",

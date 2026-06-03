@@ -32,7 +32,13 @@ def run(project_root: Path) -> list[dict]:
     ]
     for rel_path in required_dirs:
         path = project_root / rel_path
-        results.append(_result(f"directory present: {rel_path}", path.exists() and path.is_dir(), str(path)))
+        results.append(
+            _result(
+                f"directory present: {rel_path}",
+                path.exists() and path.is_dir(),
+                str(path),
+            )
+        )
 
     logs_dir = project_root / "logs"
     try:

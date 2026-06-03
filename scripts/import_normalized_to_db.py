@@ -8,6 +8,7 @@ Usage:
   python scripts/import_normalized_to_db.py --in data/normalized --db storage/chaos.db
 
 """
+
 from __future__ import annotations
 
 import argparse
@@ -32,8 +33,7 @@ def stable_id_from_row(row: dict[str, Any]) -> str:
 
 
 def ensure_table(conn: sqlite3.Connection) -> None:
-    conn.executescript(
-        """
+    conn.executescript("""
         CREATE TABLE IF NOT EXISTS documents (
             doc_id TEXT PRIMARY KEY,
             normalized_at_utc TEXT NOT NULL,
@@ -49,22 +49,28 @@ def ensure_table(conn: sqlite3.Connection) -> None:
             body_text TEXT,
             raw_json TEXT
         );
-        """
-    )
+        """)
 
 
 def insert_row(conn: sqlite3.Connection, row: dict[str, Any]) -> None:
     doc_id = stable_id_from_row(row)
     normalized_at = row.get("normalized_at_utc") or utc_now()
     ingested = row.get("ingested_at_utc")
-    published = row.get("published_at_utc") or row.get("published") or row.get("published_at")
+    published = (
+        row.get("published_at_utc") or row.get("published") or row.get("published_at")
+    )
     source_id = row.get("source_id") or row.get("source")
     source_label = row.get("source_label") or row.get("source") or source_id
     category = row.get("category")
     feed_url = row.get("feed_url") or row.get("feed")
     url = row.get("url") or row.get("link")
     title = row.get("title")
-    body = row.get("body_text") or row.get("body") or row.get("summary") or row.get("content")
+    body = (
+        row.get("body_text")
+        or row.get("body")
+        or row.get("summary")
+        or row.get("content")
+    )
     raw = json.dumps(row, ensure_ascii=False)
 
     conn.execute(
@@ -116,14 +122,27 @@ def import_normalized(base_dir: Path, db_path: Path) -> int:
 
     conn.commit()
     conn.close()
-    print(json.dumps({"event": "import_done", "files": len(files), "rows": total, "db": str(db_path)}))
+    print(
+        json.dumps(
+            {
+                "event": "import_done",
+                "files": len(files),
+                "rows": total,
+                "db": str(db_path),
+            }
+        )
+    )
     return total
 
 
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--in", dest="base_dir", default="data/normalized", help="Base normalized dir")
-    ap.add_argument("--db", dest="db_path", default="storage/chaos.db", help="SQLite DB path")
+    ap.add_argument(
+        "--in", dest="base_dir", default="data/normalized", help="Base normalized dir"
+    )
+    ap.add_argument(
+        "--db", dest="db_path", default="storage/chaos.db", help="SQLite DB path"
+    )
     return ap
 
 

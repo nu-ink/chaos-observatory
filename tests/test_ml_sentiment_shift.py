@@ -32,7 +32,14 @@ def test_sentiment_cli_writes_outputs(tmp_path) -> None:
     with input_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
             handle,
-            fieldnames=["article_id", "source", "topic", "title", "text", "published_at"],
+            fieldnames=[
+                "article_id",
+                "source",
+                "topic",
+                "title",
+                "text",
+                "published_at",
+            ],
         )
         writer.writeheader()
         writer.writerow(

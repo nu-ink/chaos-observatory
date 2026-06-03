@@ -30,7 +30,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-
 # ---------------------------------------------------------------------
 # Domain tone lexicons
 # ---------------------------------------------------------------------
@@ -126,6 +125,7 @@ LEXICONS: dict[str, list[str]] = {
 # Data models
 # ---------------------------------------------------------------------
 
+
 @dataclass
 class Article:
     article_id: str
@@ -168,6 +168,7 @@ class ToneShiftAlert:
 # Input loading
 # ---------------------------------------------------------------------
 
+
 def load_articles(input_path: Path) -> list[Article]:
     """
     Load articles from CSV or JSON.
@@ -207,7 +208,9 @@ def load_articles_from_csv(input_path: Path) -> list[Article]:
                     topic=str(row.get("topic") or "unknown"),
                     title=str(row.get("title") or ""),
                     text=str(row.get("text") or row.get("summary") or ""),
-                    published_at=str(row.get("published_at") or datetime.utcnow().isoformat()),
+                    published_at=str(
+                        row.get("published_at") or datetime.utcnow().isoformat()
+                    ),
                 )
             )
 
@@ -234,8 +237,17 @@ def load_articles_from_json(input_path: Path) -> list[Article]:
                 source=str(row.get("source") or "unknown"),
                 topic=str(row.get("topic") or "unknown"),
                 title=str(row.get("title") or ""),
-                text=str(row.get("text") or row.get("summary") or row.get("description") or ""),
-                published_at=str(row.get("published_at") or row.get("published") or datetime.utcnow().isoformat()),
+                text=str(
+                    row.get("text")
+                    or row.get("summary")
+                    or row.get("description")
+                    or ""
+                ),
+                published_at=str(
+                    row.get("published_at")
+                    or row.get("published")
+                    or datetime.utcnow().isoformat()
+                ),
             )
         )
 
@@ -245,6 +257,7 @@ def load_articles_from_json(input_path: Path) -> list[Article]:
 # ---------------------------------------------------------------------
 # Rule-based scoring
 # ---------------------------------------------------------------------
+
 
 def normalize_text(text: str) -> str:
     """
@@ -358,7 +371,10 @@ def choose_tone_label(scores: dict[str, float]) -> str:
 # Aggregation and shift detection
 # ---------------------------------------------------------------------
 
-def group_scores_by_source_topic(scores: list[ToneScore]) -> dict[tuple[str, str], list[ToneScore]]:
+
+def group_scores_by_source_topic(
+    scores: list[ToneScore],
+) -> dict[tuple[str, str], list[ToneScore]]:
     """
     Group scored articles by source and topic.
     """
@@ -472,6 +488,7 @@ def classify_alert_level(shift_score: float) -> str:
 # Output writers
 # ---------------------------------------------------------------------
 
+
 def write_json(path: Path, data: Any) -> None:
     """
     Write JSON output.
@@ -483,7 +500,9 @@ def write_json(path: Path, data: Any) -> None:
         json.dump(data, file, indent=2)
 
 
-def write_markdown_report(path: Path, scores: list[ToneScore], alerts: list[ToneShiftAlert]) -> None:
+def write_markdown_report(
+    path: Path, scores: list[ToneScore], alerts: list[ToneShiftAlert]
+) -> None:
     """
     Write a simple markdown report.
     """
@@ -504,7 +523,9 @@ def write_markdown_report(path: Path, scores: list[ToneScore], alerts: list[Tone
         lines.append("")
 
         for alert in alerts:
-            lines.append(f"### {alert.alert_level.upper()} — {alert.source} / {alert.topic}")
+            lines.append(
+                f"### {alert.alert_level.upper()} — {alert.source} / {alert.topic}"
+            )
             lines.append("")
             lines.append(f"- Current score: `{alert.current_score}`")
             lines.append(f"- Baseline score: `{alert.baseline_score}`")
@@ -533,6 +554,7 @@ def write_markdown_report(path: Path, scores: list[ToneScore], alerts: list[Tone
 # Future ML placeholder
 # ---------------------------------------------------------------------
 
+
 def future_ml_classifier_placeholder() -> None:
     """
     Future implementation idea.
@@ -554,6 +576,7 @@ def future_ml_classifier_placeholder() -> None:
 # ---------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------
+
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(

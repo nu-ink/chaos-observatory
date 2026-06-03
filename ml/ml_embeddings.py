@@ -97,6 +97,8 @@ class EmbeddingService:
     def generate_article_embedding(self, article: ArticleInput) -> np.ndarray:
         return self.generate_embedding(build_embedding_text(article))
 
-    def generate_article_embeddings(self, articles: Iterable[ArticleInput]) -> np.ndarray:
+    def generate_article_embeddings(
+        self, articles: Iterable[ArticleInput]
+    ) -> np.ndarray:
         texts = [build_embedding_text(article) for article in articles]
         return self.generate_embeddings(texts)

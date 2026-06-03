@@ -41,7 +41,6 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Set, Tuple
 
-
 # ----------------------------
 # Stopwords (extend later)
 # ----------------------------
@@ -273,7 +272,9 @@ def read_jsonl(path: Path) -> Iterable[dict]:
             yield json.loads(line)
 
 
-def load_docs(base_dir: Path, start_day: datetime, end_day: datetime, group_by: str) -> List[Doc]:
+def load_docs(
+    base_dir: Path, start_day: datetime, end_day: datetime, group_by: str
+) -> List[Doc]:
     docs: List[Doc] = []
     cur = start_day
     while cur <= end_day:
@@ -281,7 +282,9 @@ def load_docs(base_dir: Path, start_day: datetime, end_day: datetime, group_by: 
         if part.exists() and part.is_dir():
             for f in part.glob("*.jsonl"):
                 for row in read_jsonl(f):
-                    source_label = row.get("source_label") or row.get("source_id") or "unknown"
+                    source_label = (
+                        row.get("source_label") or row.get("source_id") or "unknown"
+                    )
                     region = row.get("region") or "unknown"
                     if group_by == "region":
                         group = region
@@ -348,7 +351,9 @@ def rates_from_tokens(tokens: Sequence[str]) -> Dict[str, float]:
     }
 
 
-def analyze_docs(docs: List[Doc], min_token_len: int) -> Tuple[Dict[str, float], Counter]:
+def analyze_docs(
+    docs: List[Doc], min_token_len: int
+) -> Tuple[Dict[str, float], Counter]:
     """
     Returns:
       - rates (lexical indicators)
@@ -375,13 +380,17 @@ def kl_div(p: Dict[str, float], q: Dict[str, float]) -> float:
     return s
 
 
-def jensen_shannon_distance(counts_a: Counter, counts_b: Counter, top_vocab: int = 5000) -> float:
+def jensen_shannon_distance(
+    counts_a: Counter, counts_b: Counter, top_vocab: int = 5000
+) -> float:
     """
     JSD between token distributions, capped to top_vocab terms to keep it stable.
     Returns sqrt(JSD) in [0, 1-ish].
     """
     # Build capped vocab
-    vocab = set([t for t, _ in counts_a.most_common(top_vocab)]) | set([t for t, _ in counts_b.most_common(top_vocab)])
+    vocab = set([t for t, _ in counts_a.most_common(top_vocab)]) | set(
+        [t for t, _ in counts_b.most_common(top_vocab)]
+    )
     if not vocab:
         return 0.0
 
@@ -412,8 +421,12 @@ def write_markdown(out_path: Path, result: dict) -> None:
     lines.append("# Chaos Observatory — Sentiment Shift")
     lines.append("")
     lines.append(f"**Generated (UTC):** {meta['generated_at_utc']}")
-    lines.append(f"**Current window (UTC):** {meta['current_start']} → {meta['current_end']}  ")
-    lines.append(f"**Baseline window (UTC):** {meta['baseline_start']} → {meta['baseline_end']}")
+    lines.append(
+        f"**Current window (UTC):** {meta['current_start']} → {meta['current_end']}  "
+    )
+    lines.append(
+        f"**Baseline window (UTC):** {meta['baseline_start']} → {meta['baseline_end']}"
+    )
     lines.append(f"**Group-by:** {meta['group_by']}")
     lines.append("")
     lines.append("## Global Shift Summary")
@@ -436,7 +449,9 @@ def write_markdown(out_path: Path, result: dict) -> None:
     lines.append(f"| tokens | {cur['tokens']} | {base['tokens']} |")
     if "lexical_js_distance" in result:
         lines.append("")
-        lines.append(f"**Lexical distribution shift (JSD distance):** {result['lexical_js_distance']:.6f}")
+        lines.append(
+            f"**Lexical distribution shift (JSD distance):** {result['lexical_js_distance']:.6f}"
+        )
 
     # Per-group
     per_group = result.get("per_group", {})
@@ -444,7 +459,9 @@ def write_markdown(out_path: Path, result: dict) -> None:
         lines.append("")
         lines.append("## Per-Group Shift (Top by |compression delta|)")
         lines.append("")
-        lines.append("| Group | Docs(cur/base) | compression Δ | neg Δ | urgency Δ | certainty Δ | pos Δ | hedge Δ |")
+        lines.append(
+            "| Group | Docs(cur/base) | compression Δ | neg Δ | urgency Δ | certainty Δ | pos Δ | hedge Δ |"
+        )
         lines.append("|---|---:|---:|---:|---:|---:|---:|---:|")
         for g, row in list(per_group.items())[:25]:
             group = g.replace("|", "\\|")
@@ -461,16 +478,47 @@ def write_markdown(out_path: Path, result: dict) -> None:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--normalized-dir", default="data/normalized", help="Base normalized partition dir")
-    ap.add_argument("--end-date", default=None, help="UTC end date YYYY-MM-DD (default: today UTC)")
-    ap.add_argument("--window-days", type=int, default=7, help="Current window length (days)")
-    ap.add_argument("--baseline-days", type=int, default=7, help="Baseline window length (days)")
-    ap.add_argument("--group-by", choices=["region", "source"], default="region", help="Group docs by region or source")
-    ap.add_argument("--min-docs", type=int, default=10, help="Minimum docs per window required (global)")
-    ap.add_argument("--min-docs-per-group", type=int, default=10, help="Minimum docs per group per window")
+    ap.add_argument(
+        "--normalized-dir",
+        default="data/normalized",
+        help="Base normalized partition dir",
+    )
+    ap.add_argument(
+        "--end-date", default=None, help="UTC end date YYYY-MM-DD (default: today UTC)"
+    )
+    ap.add_argument(
+        "--window-days", type=int, default=7, help="Current window length (days)"
+    )
+    ap.add_argument(
+        "--baseline-days", type=int, default=7, help="Baseline window length (days)"
+    )
+    ap.add_argument(
+        "--group-by",
+        choices=["region", "source"],
+        default="region",
+        help="Group docs by region or source",
+    )
+    ap.add_argument(
+        "--min-docs",
+        type=int,
+        default=10,
+        help="Minimum docs per window required (global)",
+    )
+    ap.add_argument(
+        "--min-docs-per-group",
+        type=int,
+        default=10,
+        help="Minimum docs per group per window",
+    )
     ap.add_argument("--min-token-len", type=int, default=3, help="Minimum token length")
-    ap.add_argument("--per-group", action="store_true", help="Also compute per-group shifts")
-    ap.add_argument("--jsd", action="store_true", help="Compute lexical Jensen–Shannon distance between windows")
+    ap.add_argument(
+        "--per-group", action="store_true", help="Also compute per-group shifts"
+    )
+    ap.add_argument(
+        "--jsd",
+        action="store_true",
+        help="Compute lexical Jensen–Shannon distance between windows",
+    )
     ap.add_argument("--md-out", default=None, help="Optional markdown output path")
     args = ap.parse_args(argv)
 
@@ -494,8 +542,14 @@ def main(argv=None) -> int:
             "docs_current": len(docs_cur),
             "docs_baseline": len(docs_base),
             "min_docs": args.min_docs,
-            "current_window": {"start": day_to_partition(cur_start), "end": day_to_partition(end_day)},
-            "baseline_window": {"start": day_to_partition(base_start), "end": day_to_partition(base_end)},
+            "current_window": {
+                "start": day_to_partition(cur_start),
+                "end": day_to_partition(end_day),
+            },
+            "baseline_window": {
+                "start": day_to_partition(base_start),
+                "end": day_to_partition(base_end),
+            },
         }
         print(json.dumps(out, ensure_ascii=False))
         return 2
@@ -515,7 +569,9 @@ def main(argv=None) -> int:
     result = {
         "event": "sentiment_shift",
         "meta": {
-            "generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "generated_at_utc": datetime.now(timezone.utc).isoformat(
+                timespec="seconds"
+            ),
             "current_start": day_to_partition(cur_start),
             "current_end": day_to_partition(end_day),
             "baseline_start": day_to_partition(base_start),
@@ -552,7 +608,10 @@ def main(argv=None) -> int:
         for g in sorted(set(cur_by.keys()) & set(base_by.keys())):
             cur_docs_g = cur_by[g]
             base_docs_g = base_by[g]
-            if len(cur_docs_g) < args.min_docs_per_group or len(base_docs_g) < args.min_docs_per_group:
+            if (
+                len(cur_docs_g) < args.min_docs_per_group
+                or len(base_docs_g) < args.min_docs_per_group
+            ):
                 continue
 
             g_cur, _ = analyze_docs(cur_docs_g, args.min_token_len)
@@ -581,7 +640,9 @@ def main(argv=None) -> int:
             )
 
         # Sort by biggest absolute compression delta
-        per_group_rows.sort(key=lambda kv: abs(kv[1]["delta"]["compression"]), reverse=True)
+        per_group_rows.sort(
+            key=lambda kv: abs(kv[1]["delta"]["compression"]), reverse=True
+        )
         result["per_group"] = {g: row for g, row in per_group_rows}
 
     if args.md_out:

@@ -21,10 +21,10 @@ sys.path.insert(0, str(parent_dir))
 
 from ingest import normalize, rss_collector
 
-
 # ============================================================================
 # Tests for rss_collector.py
 # ============================================================================
+
 
 class TestLoadSourcesYAML:
     """Test load_sources_yaml() function."""
@@ -163,7 +163,7 @@ class TestNormalizeEntryMinimal:
             "title": "Test Title",
             "link": "https://example.com/article",
             "published": "2024-01-01T12:00:00Z",
-            "summary": "Test summary text"
+            "summary": "Test summary text",
         }
 
         result = rss_collector.normalize_entry_minimal(entry)
@@ -177,9 +177,7 @@ class TestNormalizeEntryMinimal:
 
     def test_missing_fields(self):
         """Test entry with missing optional fields."""
-        entry = {
-            "title": "Only Title"
-        }
+        entry = {"title": "Only Title"}
 
         result = rss_collector.normalize_entry_minimal(entry)
 
@@ -190,10 +188,7 @@ class TestNormalizeEntryMinimal:
 
     def test_updated_fallback(self):
         """Test that 'updated' field is used as fallback for 'published'."""
-        entry = {
-            "title": "Test",
-            "updated": "2024-01-01T12:00:00Z"
-        }
+        entry = {"title": "Test", "updated": "2024-01-01T12:00:00Z"}
 
         result = rss_collector.normalize_entry_minimal(entry)
 
@@ -201,10 +196,7 @@ class TestNormalizeEntryMinimal:
 
     def test_description_fallback(self):
         """Test that 'description' field is used as fallback for 'summary'."""
-        entry = {
-            "title": "Test",
-            "description": "Description text"
-        }
+        entry = {"title": "Test", "description": "Description text"}
 
         result = rss_collector.normalize_entry_minimal(entry)
 
@@ -216,13 +208,7 @@ class TestSafeGet:
 
     def test_nested_access(self):
         """Test accessing nested dictionary keys."""
-        d = {
-            "level1": {
-                "level2": {
-                    "level3": "value"
-                }
-            }
-        }
+        d = {"level1": {"level2": {"level3": "value"}}}
 
         result = rss_collector.safe_get(d, "level1", "level2", "level3")
         assert result == "value"
@@ -271,7 +257,7 @@ class TestWriteJSONL:
         rows = [
             {"id": 1, "text": "first"},
             {"id": 2, "text": "second"},
-            {"id": 3, "text": "third"}
+            {"id": 3, "text": "third"},
         ]
 
         count = rss_collector.write_jsonl(output_file, rows)
@@ -315,7 +301,9 @@ class TestFetchFeed:
         mock_response.content = b"<rss></rss>"
         mock_feedparser.parse.return_value = {"entries": []}
 
-        rss_collector.fetch_feed("https://example.com/feed.xml", timeout_sec=20, user_agent="Test-Agent/1.0")
+        rss_collector.fetch_feed(
+            "https://example.com/feed.xml", timeout_sec=20, user_agent="Test-Agent/1.0"
+        )
 
         assert mock_feedparser.USER_AGENT == "Test-Agent/1.0"
         mock_requests.get.assert_called_once_with(
@@ -334,7 +322,9 @@ class TestFetchFeed:
         mock_result = {"entries": [{"title": "Test"}]}
         mock_feedparser.parse.return_value = mock_result
 
-        result = rss_collector.fetch_feed("https://example.com/feed.xml", timeout_sec=20, user_agent="Test")
+        result = rss_collector.fetch_feed(
+            "https://example.com/feed.xml", timeout_sec=20, user_agent="Test"
+        )
 
         assert result == mock_result
 
@@ -360,11 +350,7 @@ class TestReadJSONL:
     def test_read_multiple_lines(self, tmp_path):
         """Test reading multiple JSON lines."""
         jsonl_file = tmp_path / "test.jsonl"
-        jsonl_file.write_text(
-            '{"id": 1}\n'
-            '{"id": 2}\n'
-            '{"id": 3}\n'
-        )
+        jsonl_file.write_text('{"id": 1}\n' '{"id": 2}\n' '{"id": 3}\n')
 
         rows = list(normalize.read_jsonl(jsonl_file))
 
@@ -376,13 +362,7 @@ class TestReadJSONL:
     def test_skip_empty_lines(self, tmp_path):
         """Test that empty lines are skipped."""
         jsonl_file = tmp_path / "test.jsonl"
-        jsonl_file.write_text(
-            '{"id": 1}\n'
-            '\n'
-            '{"id": 2}\n'
-            '   \n'
-            '{"id": 3}\n'
-        )
+        jsonl_file.write_text('{"id": 1}\n' "\n" '{"id": 2}\n' "   \n" '{"id": 3}\n')
 
         rows = list(normalize.read_jsonl(jsonl_file))
 
@@ -439,7 +419,7 @@ class TestNormalizeRow:
             "title": "Test Title",
             "link": "https://example.com/article",
             "published": "2024-01-01T12:00:00Z",
-            "summary": "Test summary"
+            "summary": "Test summary",
         }
 
         result = normalize.normalize_row(raw_row)
@@ -491,7 +471,7 @@ class TestNormalizeRow:
         raw_row = {
             "source_id": "test",
             "title": "Test",
-            "url": "https://example.com/article"
+            "url": "https://example.com/article",
         }
 
         result = normalize.normalize_row(raw_row)
@@ -504,7 +484,7 @@ class TestNormalizeRow:
             "source_id": "test",
             "title": "Test",
             "link": "https://example.com/link",
-            "url": "https://example.com/url"
+            "url": "https://example.com/url",
         }
 
         result = normalize.normalize_row(raw_row)
@@ -516,7 +496,7 @@ class TestNormalizeRow:
         raw_row = {
             "source_id": "test",
             "title": "Test",
-            "description": "Description text"
+            "description": "Description text",
         }
 
         result = normalize.normalize_row(raw_row)
@@ -530,7 +510,7 @@ class TestNormalizeRow:
             "source_id": "test",
             "title": "Test",
             "content": "Content text",
-            "summary": "Summary text"
+            "summary": "Summary text",
         }
 
         result = normalize.normalize_row(raw_row)
@@ -540,9 +520,7 @@ class TestNormalizeRow:
 
     def test_missing_fields(self):
         """Test normalization with missing optional fields."""
-        raw_row = {
-            "title": "Test"
-        }
+        raw_row = {"title": "Test"}
 
         result = normalize.normalize_row(raw_row)
 
@@ -571,6 +549,7 @@ class TestNormalizeRow:
 # Integration tests
 # ============================================================================
 
+
 class TestIntegration:
     """Integration tests for the full ingest pipeline."""
 
@@ -583,7 +562,7 @@ class TestIntegration:
             "title": "Test Article",
             "link": "https://example.com/article",
             "published": "2024-01-01T12:00:00Z",
-            "summary": "Article summary"
+            "summary": "Article summary",
         }
         raw_file.write_text(json.dumps(raw_data, ensure_ascii=False) + "\n")
 

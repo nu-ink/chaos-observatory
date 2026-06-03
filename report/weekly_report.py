@@ -38,11 +38,83 @@ from typing import Dict, Iterable, List, Optional, Tuple
 # Minimal stopwords (v1)
 # ----------------------------
 STOPWORDS = {
-    "a","an","and","are","as","at","be","been","but","by","can","could","did","do","does","for","from",
-    "had","has","have","he","her","his","how","i","if","in","into","is","it","its","just","may","might",
-    "more","most","must","not","of","on","or","our","out","over","s","said","she","should","so","some",
-    "than","that","the","their","them","then","there","these","they","this","to","too","under","up",
-    "was","we","were","what","when","where","which","who","will","with","would","you","your",
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "been",
+    "but",
+    "by",
+    "can",
+    "could",
+    "did",
+    "do",
+    "does",
+    "for",
+    "from",
+    "had",
+    "has",
+    "have",
+    "he",
+    "her",
+    "his",
+    "how",
+    "i",
+    "if",
+    "in",
+    "into",
+    "is",
+    "it",
+    "its",
+    "just",
+    "may",
+    "might",
+    "more",
+    "most",
+    "must",
+    "not",
+    "of",
+    "on",
+    "or",
+    "our",
+    "out",
+    "over",
+    "s",
+    "said",
+    "she",
+    "should",
+    "so",
+    "some",
+    "than",
+    "that",
+    "the",
+    "their",
+    "them",
+    "then",
+    "there",
+    "these",
+    "they",
+    "this",
+    "to",
+    "too",
+    "under",
+    "up",
+    "was",
+    "we",
+    "were",
+    "what",
+    "when",
+    "where",
+    "which",
+    "who",
+    "will",
+    "with",
+    "would",
+    "you",
+    "your",
 }
 
 # ----------------------------
@@ -50,14 +122,59 @@ STOPWORDS = {
 # Explainable, not “truth”.
 # ----------------------------
 POS_WORDS = {
-    "agree","aid","calm","ceasefire","cooperate","cooperation","deal","decline","decrease","deescalate",
-    "growth","improve","improvement","progress","recover","recovery","relief","rescue","stabilize",
-    "support","truce",
+    "agree",
+    "aid",
+    "calm",
+    "ceasefire",
+    "cooperate",
+    "cooperation",
+    "deal",
+    "decline",
+    "decrease",
+    "deescalate",
+    "growth",
+    "improve",
+    "improvement",
+    "progress",
+    "recover",
+    "recovery",
+    "relief",
+    "rescue",
+    "stabilize",
+    "support",
+    "truce",
 }
 NEG_WORDS = {
-    "attack","bomb","crisis","dead","death","decline","disaster","emergency","escalate","explosion",
-    "famine","fear","fighting","flood","hostage","inflation","injury","killed","missile","outbreak",
-    "pandemic","protest","raid","risk","sanction","shortage","strike","threat","tension","war",
+    "attack",
+    "bomb",
+    "crisis",
+    "dead",
+    "death",
+    "decline",
+    "disaster",
+    "emergency",
+    "escalate",
+    "explosion",
+    "famine",
+    "fear",
+    "fighting",
+    "flood",
+    "hostage",
+    "inflation",
+    "injury",
+    "killed",
+    "missile",
+    "outbreak",
+    "pandemic",
+    "protest",
+    "raid",
+    "risk",
+    "sanction",
+    "shortage",
+    "strike",
+    "threat",
+    "tension",
+    "war",
 }
 
 
@@ -103,7 +220,9 @@ def read_jsonl(path: Path) -> Iterable[dict]:
             yield json.loads(line)
 
 
-def load_docs_from_partitions(base_dir: Path, start_day: datetime, end_day: datetime) -> List[Doc]:
+def load_docs_from_partitions(
+    base_dir: Path, start_day: datetime, end_day: datetime
+) -> List[Doc]:
     docs: List[Doc] = []
     cur = start_day
     while cur <= end_day:
@@ -115,7 +234,9 @@ def load_docs_from_partitions(base_dir: Path, start_day: datetime, end_day: date
                         Doc(
                             published_at_utc=row.get("published_at_utc"),
                             source_id=row.get("source_id") or "unknown",
-                            source_label=row.get("source_label") or row.get("source_id") or "unknown",
+                            source_label=row.get("source_label")
+                            or row.get("source_id")
+                            or "unknown",
                             title=row.get("title") or "",
                             body_text=row.get("body_text") or "",
                         )
@@ -156,7 +277,16 @@ def sentiment_index(docs: List[Doc]) -> Dict[str, float]:
 
     Interpret carefully: it's a consistent indicator, not “truth”.
     """
-    certainty_words = {"must","will","cannot","never","always","inevitable","urgent","critical"}
+    certainty_words = {
+        "must",
+        "will",
+        "cannot",
+        "never",
+        "always",
+        "inevitable",
+        "urgent",
+        "critical",
+    }
 
     pos_hits = 0
     neg_hits = 0
@@ -171,7 +301,13 @@ def sentiment_index(docs: List[Doc]) -> Dict[str, float]:
         cert_hits += sum(1 for t in toks if t in certainty_words)
 
     if tok_total == 0:
-        return {"pos_rate": 0.0, "neg_rate": 0.0, "certainty_rate": 0.0, "compression": 0.0, "tokens": 0}
+        return {
+            "pos_rate": 0.0,
+            "neg_rate": 0.0,
+            "certainty_rate": 0.0,
+            "compression": 0.0,
+            "tokens": 0,
+        }
 
     pos_rate = pos_hits / tok_total
     neg_rate = neg_hits / tok_total
@@ -187,7 +323,9 @@ def sentiment_index(docs: List[Doc]) -> Dict[str, float]:
     }
 
 
-def drift_terms(current: Counter, baseline: Counter, top_n: int = 25, min_current: int = 8) -> List[Tuple[str, float, int, int]]:
+def drift_terms(
+    current: Counter, baseline: Counter, top_n: int = 25, min_current: int = 8
+) -> List[Tuple[str, float, int, int]]:
     """
     Drift score: log1p(current) - log1p(baseline)
     Returns list of (term, score, current_count, baseline_count)
@@ -205,7 +343,9 @@ def drift_terms(current: Counter, baseline: Counter, top_n: int = 25, min_curren
     return rows[:top_n]
 
 
-def silence_terms(current: Counter, baseline: Counter, top_n: int = 15, min_baseline: int = 12) -> List[Tuple[str, int]]:
+def silence_terms(
+    current: Counter, baseline: Counter, top_n: int = 15, min_baseline: int = 12
+) -> List[Tuple[str, int]]:
     """
     Terms that were frequent in baseline but effectively absent now.
     """
@@ -220,13 +360,19 @@ def silence_terms(current: Counter, baseline: Counter, top_n: int = 15, min_base
     return rows
 
 
-def md_table_kv(rows: List[Tuple[str, str]], header_left: str = "Metric", header_right: str = "Value") -> str:
+def md_table_kv(
+    rows: List[Tuple[str, str]],
+    header_left: str = "Metric",
+    header_right: str = "Value",
+) -> str:
     out = [f"| {header_left} | {header_right} |", "|---|---|"]
     out += [f"| {k} | {v} |" for k, v in rows]
     return "\n".join(out)
 
 
-def md_table_counts(rows: List[Tuple[str, int]], header_left: str = "Item", header_right: str = "Count") -> str:
+def md_table_counts(
+    rows: List[Tuple[str, int]], header_left: str = "Item", header_right: str = "Count"
+) -> str:
     out = [f"| {header_left} | {header_right} |", "|---|---:|"]
     out += [f"| {k} | {v} |" for k, v in rows]
     return "\n".join(out)
@@ -260,16 +406,24 @@ def build_report(
     silence = silence_terms(cur_terms, base_terms, top_n=15) if docs_baseline else []
 
     sent_cur = sentiment_index(docs_current)
-    sent_base = sentiment_index(docs_baseline) if docs_baseline else {"compression": 0.0, "tokens": 0}
+    sent_base = (
+        sentiment_index(docs_baseline)
+        if docs_baseline
+        else {"compression": 0.0, "tokens": 0}
+    )
 
     # Markdown
     lines: List[str] = []
 
     lines.append("# Chaos Observatory — Weekly Drift Report")
     lines.append("")
-    lines.append(f"**Report window (UTC):** {start_day.strftime('%Y-%m-%d')} → {end_day.strftime('%Y-%m-%d')}  ")
+    lines.append(
+        f"**Report window (UTC):** {start_day.strftime('%Y-%m-%d')} → {end_day.strftime('%Y-%m-%d')}  "
+    )
     if docs_baseline:
-        lines.append(f"**Baseline window (UTC):** {baseline_start.strftime('%Y-%m-%d')} → {baseline_end.strftime('%Y-%m-%d')}")
+        lines.append(
+            f"**Baseline window (UTC):** {baseline_start.strftime('%Y-%m-%d')} → {baseline_end.strftime('%Y-%m-%d')}"
+        )
     else:
         lines.append("**Baseline window (UTC):** *(disabled)*")
     lines.append("")
@@ -285,14 +439,21 @@ def build_report(
                 ("Documents (current)", str(cur_vol)),
                 ("Documents (baseline)", str(base_vol) if docs_baseline else "n/a"),
                 ("Unique terms (current)", str(len(cur_terms))),
-                ("Generated at (UTC)", datetime.now(timezone.utc).isoformat(timespec="seconds")),
+                (
+                    "Generated at (UTC)",
+                    datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                ),
             ]
         )
     )
     lines.append("")
     lines.append("### Sources (Current Window)")
     lines.append("")
-    lines.append(md_table_counts(list(cur_by_src.items())[:25], header_left="Source", header_right="Docs"))
+    lines.append(
+        md_table_counts(
+            list(cur_by_src.items())[:25], header_left="Source", header_right="Docs"
+        )
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -314,7 +475,9 @@ def build_report(
     lines.append("## 3) Term Drift (Rise vs Baseline)")
     lines.append("")
     if not docs_baseline:
-        lines.append("_Baseline disabled — set `--baseline-days` > 0 to enable drift section (e.g. `--baseline-days 7`)._")
+        lines.append(
+            "_Baseline disabled — set `--baseline-days` > 0 to enable drift section (e.g. `--baseline-days 7`)._"
+        )
     elif not drift:
         lines.append("_No drift terms met thresholds._")
     else:
@@ -355,7 +518,10 @@ def build_report(
         cur_rows += [
             ("Tokens analyzed (baseline)", str(sent_base["tokens"])),
             ("compression (baseline)", f"{sent_base['compression']:.6f}"),
-            ("compression delta", f"{(sent_cur['compression'] - sent_base['compression']):.6f}"),
+            (
+                "compression delta",
+                f"{(sent_cur['compression'] - sent_base['compression']):.6f}",
+            ),
         ]
     lines.append(md_table_kv(cur_rows))
     lines.append("")
@@ -366,9 +532,13 @@ def build_report(
     lines.append("## 5) Silence Indicators (Present in Baseline, Missing Now)")
     lines.append("")
     if not docs_baseline:
-        lines.append("_Baseline disabled — set `--baseline-days` > 0 to enable silence indicators (e.g. `--baseline-days 7`)._")
+        lines.append(
+            "_Baseline disabled — set `--baseline-days` > 0 to enable silence indicators (e.g. `--baseline-days 7`)._"
+        )
     elif not silence:
-        lines.append("_No strong baseline terms fully disappeared in the current window._")
+        lines.append(
+            "_No strong baseline terms fully disappeared in the current window._"
+        )
     else:
         lines.append(
             "> These terms appeared frequently in the baseline window but did not appear at all in the current window. "
@@ -386,9 +556,15 @@ def build_report(
     # Notes
     lines.append("## Notes")
     lines.append("")
-    lines.append("- This report is **observational** and based on text frequency signals.")
-    lines.append("- RSS summaries vary by publisher; treat cross-source comparisons carefully.")
-    lines.append("- Next upgrades: entity extraction, phrase/bigram drift, semantic clustering, and source weighting.")
+    lines.append(
+        "- This report is **observational** and based on text frequency signals."
+    )
+    lines.append(
+        "- RSS summaries vary by publisher; treat cross-source comparisons carefully."
+    )
+    lines.append(
+        "- Next upgrades: entity extraction, phrase/bigram drift, semantic clustering, and source weighting."
+    )
     lines.append("")
 
     return "\n".join(lines)
@@ -396,11 +572,28 @@ def build_report(
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--normalized-dir", default="data/normalized", help="Base directory for normalized partitions")
-    ap.add_argument("--outdir", default="reports", help="Base output directory for reports")
-    ap.add_argument("--end-date", default=None, help="End date (UTC) YYYY-MM-DD. Default: today (UTC)")
-    ap.add_argument("--window-days", type=int, default=7, help="Report window length (days)")
-    ap.add_argument("--baseline-days", type=int, default=7, help="Baseline window length (days). Set 0 to disable.")
+    ap.add_argument(
+        "--normalized-dir",
+        default="data/normalized",
+        help="Base directory for normalized partitions",
+    )
+    ap.add_argument(
+        "--outdir", default="reports", help="Base output directory for reports"
+    )
+    ap.add_argument(
+        "--end-date",
+        default=None,
+        help="End date (UTC) YYYY-MM-DD. Default: today (UTC)",
+    )
+    ap.add_argument(
+        "--window-days", type=int, default=7, help="Report window length (days)"
+    )
+    ap.add_argument(
+        "--baseline-days",
+        type=int,
+        default=7,
+        help="Baseline window length (days). Set 0 to disable.",
+    )
     args = ap.parse_args(argv)
 
     if args.window_days <= 0:
@@ -422,7 +615,9 @@ def main(argv=None) -> int:
         baseline_end = start_day - timedelta(days=1)
         baseline_start = start_day - timedelta(days=args.baseline_days)
         if baseline_end >= baseline_start:
-            docs_baseline = load_docs_from_partitions(base_dir, baseline_start, baseline_end)
+            docs_baseline = load_docs_from_partitions(
+                base_dir, baseline_start, baseline_end
+            )
 
     report_md = build_report(
         end_day=end_day,
@@ -435,7 +630,16 @@ def main(argv=None) -> int:
     out_path = outdir / "weekly_report.md"
     out_path.write_text(report_md, encoding="utf-8")
 
-    print(json.dumps({"event": "weekly_report_written", "out": str(out_path), "docs_current": len(docs_current), "docs_baseline": len(docs_baseline)}))
+    print(
+        json.dumps(
+            {
+                "event": "weekly_report_written",
+                "out": str(out_path),
+                "docs_current": len(docs_current),
+                "docs_baseline": len(docs_baseline),
+            }
+        )
+    )
     return 0
 
 

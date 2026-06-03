@@ -119,6 +119,7 @@ STOPWORDS: Set[str] = {
     "your",
 }
 
+
 @dataclass(frozen=True)
 class Doc:
     group: str
@@ -149,7 +150,9 @@ def read_jsonl(path: Path) -> Iterable[dict]:
             yield json.loads(line)
 
 
-def load_docs(base_dir: Path, start_day: datetime, end_day: datetime, group_by: str) -> List[Doc]:
+def load_docs(
+    base_dir: Path, start_day: datetime, end_day: datetime, group_by: str
+) -> List[Doc]:
     docs: List[Doc] = []
     cur = start_day
     while cur <= end_day:
@@ -157,7 +160,9 @@ def load_docs(base_dir: Path, start_day: datetime, end_day: datetime, group_by: 
         if part.exists() and part.is_dir():
             for f in part.glob("*.jsonl"):
                 for row in read_jsonl(f):
-                    source_label = row.get("source_label") or row.get("source_id") or "unknown"
+                    source_label = (
+                        row.get("source_label") or row.get("source_id") or "unknown"
+                    )
                     region = row.get("region") or "unknown"
                     if group_by == "region":
                         group = region
@@ -225,7 +230,9 @@ def make_markdown_report(
     lines.append("|---|---|")
     lines.append(f"| Groups analyzed | {meta['groups_analyzed']} |")
     lines.append(f"| Docs analyzed | {meta['docs_analyzed']} |")
-    lines.append(f"| Convergence score (avg cosine) | {meta['convergence_score']:.4f} |")
+    lines.append(
+        f"| Convergence score (avg cosine) | {meta['convergence_score']:.4f} |"
+    )
     lines.append("")
     lines.append("## Group Stats")
     lines.append("")
@@ -257,17 +264,55 @@ def make_markdown_report(
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--normalized-dir", default="data/normalized", help="Base normalized partition dir")
-    ap.add_argument("--end-date", default=None, help="UTC end date YYYY-MM-DD (default: today UTC)")
+    ap.add_argument(
+        "--normalized-dir",
+        default="data/normalized",
+        help="Base normalized partition dir",
+    )
+    ap.add_argument(
+        "--end-date", default=None, help="UTC end date YYYY-MM-DD (default: today UTC)"
+    )
     ap.add_argument("--window-days", type=int, default=7, help="Window length in days")
-    ap.add_argument("--group-by", choices=["region", "source"], default="region", help="Group docs by region or source")
-    ap.add_argument("--min-docs-per-group", type=int, default=10, help="Minimum docs per group to include")
-    ap.add_argument("--max-groups", type=int, default=25, help="If too many groups, keep top-N by doc count")
-    ap.add_argument("--top-terms-per-group", type=int, default=25, help="Top TF-IDF terms used for convergence term coverage")
-    ap.add_argument("--min-term-coverage", type=int, default=3, help="Minimum number of groups a term must appear in")
-    ap.add_argument("--ngram-max", type=int, default=2, help="Use 1..ngram-max (1=unigram, 2=unigram+bigrams)")
+    ap.add_argument(
+        "--group-by",
+        choices=["region", "source"],
+        default="region",
+        help="Group docs by region or source",
+    )
+    ap.add_argument(
+        "--min-docs-per-group",
+        type=int,
+        default=10,
+        help="Minimum docs per group to include",
+    )
+    ap.add_argument(
+        "--max-groups",
+        type=int,
+        default=25,
+        help="If too many groups, keep top-N by doc count",
+    )
+    ap.add_argument(
+        "--top-terms-per-group",
+        type=int,
+        default=25,
+        help="Top TF-IDF terms used for convergence term coverage",
+    )
+    ap.add_argument(
+        "--min-term-coverage",
+        type=int,
+        default=3,
+        help="Minimum number of groups a term must appear in",
+    )
+    ap.add_argument(
+        "--ngram-max",
+        type=int,
+        default=2,
+        help="Use 1..ngram-max (1=unigram, 2=unigram+bigrams)",
+    )
     ap.add_argument("--min-df", type=int, default=2, help="TF-IDF min_df")
-    ap.add_argument("--max-df", type=float, default=0.90, help="TF-IDF max_df (float fraction)")
+    ap.add_argument(
+        "--max-df", type=float, default=0.90, help="TF-IDF max_df (float fraction)"
+    )
     ap.add_argument("--md-out", default=None, help="Optional markdown output path")
     args = ap.parse_args(argv)
 
@@ -280,7 +325,15 @@ def main(argv=None) -> int:
     try:
         from sklearn.feature_extraction.text import TfidfVectorizer
     except Exception as ex:
-        print(json.dumps({"event": "topic_convergence", "error": "missing_dependency", "detail": repr(ex)}))
+        print(
+            json.dumps(
+                {
+                    "event": "topic_convergence",
+                    "error": "missing_dependency",
+                    "detail": repr(ex),
+                }
+            )
+        )
         print("Install: pip install scikit-learn", flush=True)
         return 2
 
@@ -295,7 +348,11 @@ def main(argv=None) -> int:
     for d in docs:
         docs_by_group[d.group].append(d)
 
-    group_counts = sorted(((g, len(v)) for g, v in docs_by_group.items()), key=lambda x: x[1], reverse=True)
+    group_counts = sorted(
+        ((g, len(v)) for g, v in docs_by_group.items()),
+        key=lambda x: x[1],
+        reverse=True,
+    )
 
     # Keep only groups that meet threshold, then top-N by doc count
     kept = [(g, n) for g, n in group_counts if n >= args.min_docs_per_group]
@@ -311,7 +368,10 @@ def main(argv=None) -> int:
             "groups_found": len(docs_by_group),
             "groups_kept": len(kept_groups),
             "min_docs_per_group": args.min_docs_per_group,
-            "window": {"start": day_to_partition(start_day), "end": day_to_partition(end_day)},
+            "window": {
+                "start": day_to_partition(start_day),
+                "end": day_to_partition(end_day),
+            },
         }
         print(json.dumps(out, ensure_ascii=False))
         return 2
@@ -350,7 +410,9 @@ def main(argv=None) -> int:
     for g, gv in group_vectors.items():
         dense_vecs[g] = np.asarray(gv).ravel()
 
-    groups_sorted = sorted(dense_vecs.keys(), key=lambda g: group_doc_counts[g], reverse=True)
+    groups_sorted = sorted(
+        dense_vecs.keys(), key=lambda g: group_doc_counts[g], reverse=True
+    )
 
     # Pairwise cosine similarities
     pair_rank: List[dict] = []
@@ -363,9 +425,7 @@ def main(argv=None) -> int:
 
     pair_rank.sort(key=lambda r: r["cosine"], reverse=True)
     convergence_score = (
-        sum(pair["cosine"] for pair in pair_rank) / len(pair_rank)
-        if pair_rank
-        else 0.0
+        sum(pair["cosine"] for pair in pair_rank) / len(pair_rank) if pair_rank else 0.0
     )
 
     # Convergent terms:
@@ -397,7 +457,9 @@ def main(argv=None) -> int:
         if cov < args.min_term_coverage:
             break
         avg_strength = float(term_strength[t] / cov) if cov else 0.0
-        convergent_terms.append({"term": t, "coverage": int(cov), "avg_tfidf": avg_strength})
+        convergent_terms.append(
+            {"term": t, "coverage": int(cov), "avg_tfidf": avg_strength}
+        )
 
     # Group stats
     group_stats = [{"group": g, "docs": group_doc_counts[g]} for g in groups_sorted]

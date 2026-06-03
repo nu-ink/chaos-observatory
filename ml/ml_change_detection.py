@@ -86,7 +86,9 @@ def normalize_events_frame(df: pd.DataFrame) -> pd.DataFrame:
     work = work.dropna(subset=["timestamp", "source", "topic"])
 
     if work.empty:
-        raise ValueError("No valid rows found after parsing timestamps and required fields.")
+        raise ValueError(
+            "No valid rows found after parsing timestamps and required fields."
+        )
 
     work["source"] = work["source"].astype(str)
     work["topic"] = work["topic"].astype(str)
@@ -113,9 +115,15 @@ def load_events_from_normalized(
                         row.get("published_ts"),
                         row.get("ingested_at_utc"),
                     )
-                    source = first_present(row.get("source_label"), row.get("source_id"), "unknown")
-                    topic = first_present(row.get(topic_field), row.get("category"), "unknown")
-                    rows.append({"timestamp": timestamp, "source": source, "topic": topic})
+                    source = first_present(
+                        row.get("source_label"), row.get("source_id"), "unknown"
+                    )
+                    topic = first_present(
+                        row.get(topic_field), row.get("category"), "unknown"
+                    )
+                    rows.append(
+                        {"timestamp": timestamp, "source": source, "topic": topic}
+                    )
         cur += timedelta(days=1)
 
     if not rows:
@@ -241,7 +249,9 @@ def detect_change_points(
             if alert is not None:
                 series_alerts.append(alert)
 
-        series_alerts.sort(key=lambda item: (item.score, item.breakpoint_time), reverse=True)
+        series_alerts.sort(
+            key=lambda item: (item.score, item.breakpoint_time), reverse=True
+        )
         alerts.extend(series_alerts[:top_k_per_series])
 
     columns = list(Alert.__dataclass_fields__.keys())
@@ -249,14 +259,18 @@ def detect_change_points(
         return pd.DataFrame(columns=columns)
 
     alerts_df = pd.DataFrame([asdict(alert) for alert in alerts])
-    alerts_df = alerts_df.sort_values(["score", "breakpoint_time"], ascending=[False, False])
+    alerts_df = alerts_df.sort_values(
+        ["score", "breakpoint_time"], ascending=[False, False]
+    )
     alerts_df.reset_index(drop=True, inplace=True)
     return alerts_df
 
 
 def precision_at_k(alerts_df: pd.DataFrame, k: int = 20) -> float:
     if "label" not in alerts_df.columns:
-        raise ValueError("Expected a 'label' column with 1 for true positive and 0 for false positive.")
+        raise ValueError(
+            "Expected a 'label' column with 1 for true positive and 0 for false positive."
+        )
 
     top = alerts_df.head(k)
     if top.empty:
@@ -266,7 +280,9 @@ def precision_at_k(alerts_df: pd.DataFrame, k: int = 20) -> float:
 
 def false_positive_rate(alerts_df: pd.DataFrame) -> float:
     if "label" not in alerts_df.columns:
-        raise ValueError("Expected a 'label' column with 1 for true positive and 0 for false positive.")
+        raise ValueError(
+            "Expected a 'label' column with 1 for true positive and 0 for false positive."
+        )
 
     if alerts_df.empty:
         return 0.0
@@ -293,19 +309,25 @@ def time_to_detection(
 
     alerts = alerts_df.copy()
     incidents = incidents_df.copy()
-    alerts[detection_time_col] = pd.to_datetime(alerts[detection_time_col], utc=True, errors="coerce")
-    incidents[incident_start_col] = pd.to_datetime(incidents[incident_start_col], utc=True, errors="coerce")
+    alerts[detection_time_col] = pd.to_datetime(
+        alerts[detection_time_col], utc=True, errors="coerce"
+    )
+    incidents[incident_start_col] = pd.to_datetime(
+        incidents[incident_start_col], utc=True, errors="coerce"
+    )
 
     merged = alerts.merge(incidents, on=list(key_columns), how="inner")
     merged = merged.dropna(subset=[detection_time_col, incident_start_col])
     merged = merged[merged[detection_time_col] >= merged[incident_start_col]]
     merged["time_to_detection_minutes"] = (
-        (merged[detection_time_col] - merged[incident_start_col]).dt.total_seconds() / 60.0
-    )
+        merged[detection_time_col] - merged[incident_start_col]
+    ).dt.total_seconds() / 60.0
 
     sort_cols = list(key_columns) + [incident_start_col, "time_to_detection_minutes"]
     merged = merged.sort_values(sort_cols)
-    return merged.drop_duplicates(subset=list(key_columns) + [incident_start_col], keep="first")
+    return merged.drop_duplicates(
+        subset=list(key_columns) + [incident_start_col], keep="first"
+    )
 
 
 def dataframe_to_json_records(df: pd.DataFrame) -> str:
@@ -319,18 +341,46 @@ def save_alerts_csv(alerts_df: pd.DataFrame, output_path: str | Path) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Detect source/topic change points in normalized events.")
-    parser.add_argument("--dry-run", action="store_true", help="Run a built-in non-destructive smoke test")
-    parser.add_argument("--normalized-dir", default="data/normalized", help="Date-partitioned normalized JSONL root")
-    parser.add_argument("--input-csv", help="Optional CSV with timestamp, source, topic columns")
+    parser = argparse.ArgumentParser(
+        description="Detect source/topic change points in normalized events."
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Run a built-in non-destructive smoke test",
+    )
+    parser.add_argument(
+        "--normalized-dir",
+        default="data/normalized",
+        help="Date-partitioned normalized JSONL root",
+    )
+    parser.add_argument(
+        "--input-csv", help="Optional CSV with timestamp, source, topic columns"
+    )
     parser.add_argument("--csv-out", help="Optional CSV path for alert output")
-    parser.add_argument("--end-date", help="Window end date, YYYY-MM-DD. Defaults to current UTC day")
-    parser.add_argument("--window-days", type=int, default=30, help="Number of days to scan")
-    parser.add_argument("--bucket-size", default="1D", help="Pandas bucket size, e.g. 1D or 1H")
-    parser.add_argument("--topic-field", default="category", help="Normalized JSONL field to use as topic")
-    parser.add_argument("--timestamp-field", default="published_at_utc", help="Preferred normalized timestamp field")
+    parser.add_argument(
+        "--end-date", help="Window end date, YYYY-MM-DD. Defaults to current UTC day"
+    )
+    parser.add_argument(
+        "--window-days", type=int, default=30, help="Number of days to scan"
+    )
+    parser.add_argument(
+        "--bucket-size", default="1D", help="Pandas bucket size, e.g. 1D or 1H"
+    )
+    parser.add_argument(
+        "--topic-field",
+        default="category",
+        help="Normalized JSONL field to use as topic",
+    )
+    parser.add_argument(
+        "--timestamp-field",
+        default="published_at_utc",
+        help="Preferred normalized timestamp field",
+    )
     parser.add_argument("--model", default="l2", help="ruptures PELT model")
-    parser.add_argument("--penalty", type=float, default=8.0, help="ruptures PELT penalty")
+    parser.add_argument(
+        "--penalty", type=float, default=8.0, help="ruptures PELT penalty"
+    )
     parser.add_argument("--min-series-points", type=int, default=14)
     parser.add_argument("--min-segment-size", type=int, default=3)
     parser.add_argument("--top-k-per-series", type=int, default=3)
@@ -341,10 +391,26 @@ def run_dry_run() -> dict:
     events = normalize_events_frame(
         pd.DataFrame(
             [
-                {"timestamp": "2026-05-01T00:00:00Z", "source": "health", "topic": "smoke"},
-                {"timestamp": "2026-05-02T00:00:00Z", "source": "health", "topic": "smoke"},
-                {"timestamp": "2026-05-03T00:00:00Z", "source": "health", "topic": "smoke"},
-                {"timestamp": "2026-05-04T00:00:00Z", "source": "health", "topic": "smoke"},
+                {
+                    "timestamp": "2026-05-01T00:00:00Z",
+                    "source": "health",
+                    "topic": "smoke",
+                },
+                {
+                    "timestamp": "2026-05-02T00:00:00Z",
+                    "source": "health",
+                    "topic": "smoke",
+                },
+                {
+                    "timestamp": "2026-05-03T00:00:00Z",
+                    "source": "health",
+                    "topic": "smoke",
+                },
+                {
+                    "timestamp": "2026-05-04T00:00:00Z",
+                    "source": "health",
+                    "topic": "smoke",
+                },
             ]
         )
     )
@@ -375,7 +441,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.input_csv:
             events = load_events_csv(args.input_csv)
         else:
-            end_day = parse_ymd(args.end_date) if args.end_date else utc_midnight_today()
+            end_day = (
+                parse_ymd(args.end_date) if args.end_date else utc_midnight_today()
+            )
             start_day = end_day - timedelta(days=args.window_days - 1)
             events = load_events_from_normalized(
                 normalized_dir=Path(args.normalized_dir),
@@ -396,7 +464,9 @@ def main(argv: list[str] | None = None) -> int:
             top_k_per_series=args.top_k_per_series,
         )
     except Exception as exc:
-        print(json.dumps({"status": "error", "error": str(exc)}, indent=2, sort_keys=True))
+        print(
+            json.dumps({"status": "error", "error": str(exc)}, indent=2, sort_keys=True)
+        )
         return 1
 
     if args.csv_out:

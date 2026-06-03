@@ -34,17 +34,16 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-
 DATE_DIR_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 @dataclass
 class PartitionAction:
-    base: str                # e.g., "raw" or "normalized"
-    partition: str           # YYYY-MM-DD
-    path: Path               # full path to partition dir
+    base: str  # e.g., "raw" or "normalized"
+    partition: str  # YYYY-MM-DD
+    path: Path  # full path to partition dir
     age_days: int
-    action: str              # "skip_hold", "keep", "archive", "delete"
+    action: str  # "skip_hold", "keep", "archive", "delete"
     reason: str
 
 
@@ -189,12 +188,37 @@ def emit(event: str, payload: Dict) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--raw-dir", default="data/raw", help="Base raw directory")
-    ap.add_argument("--normalized-dir", default="data/normalized", help="Base normalized directory")
-    ap.add_argument("--hold-days", type=int, default=7, help="Protect newest N days from deletion/archive")
-    ap.add_argument("--keep-days", type=int, default=30, help="Keep newest N days on disk (older will be deleted/archived)")
-    ap.add_argument("--archive-dir", default=None, help="If set, move old partitions here instead of deleting")
-    ap.add_argument("--apply", action="store_true", help="Actually perform deletes/moves (otherwise dry-run)")
-    ap.add_argument("--only", choices=["raw", "normalized", "both"], default="both", help="Which stores to process")
+    ap.add_argument(
+        "--normalized-dir", default="data/normalized", help="Base normalized directory"
+    )
+    ap.add_argument(
+        "--hold-days",
+        type=int,
+        default=7,
+        help="Protect newest N days from deletion/archive",
+    )
+    ap.add_argument(
+        "--keep-days",
+        type=int,
+        default=30,
+        help="Keep newest N days on disk (older will be deleted/archived)",
+    )
+    ap.add_argument(
+        "--archive-dir",
+        default=None,
+        help="If set, move old partitions here instead of deleting",
+    )
+    ap.add_argument(
+        "--apply",
+        action="store_true",
+        help="Actually perform deletes/moves (otherwise dry-run)",
+    )
+    ap.add_argument(
+        "--only",
+        choices=["raw", "normalized", "both"],
+        default="both",
+        help="Which stores to process",
+    )
     args = ap.parse_args()
 
     if args.hold_days < 0 or args.keep_days < 0:

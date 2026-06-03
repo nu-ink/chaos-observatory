@@ -44,14 +44,18 @@ class SemanticLinker:
             raise ValueError(f"article_id already exists: {article.article_id}")
 
         query_vector = self.embedding_service.generate_article_embedding(article)
-        matches = self.find_similar_articles(query_vector, article.article_id, self.config.top_k)
+        matches = self.find_similar_articles(
+            query_vector, article.article_id, self.config.top_k
+        )
         faiss_index_id = add_vector(self.index, query_vector)
         self.insert_article_embedding(article, faiss_index_id)
         self.store_semantic_matches(article.article_id, matches)
         save_index(self.index, self.config.index_path)
         return matches
 
-    def process_articles(self, articles: list[ArticleInput]) -> dict[str, list[SemanticMatchResult]]:
+    def process_articles(
+        self, articles: list[ArticleInput]
+    ) -> dict[str, list[SemanticMatchResult]]:
         results: dict[str, list[SemanticMatchResult]] = {}
         for article in articles:
             results[article.article_id] = self.process_article(article)
@@ -94,7 +98,9 @@ class SemanticLinker:
             )
         return matches
 
-    def insert_article_embedding(self, article: ArticleInput, faiss_index_id: int) -> None:
+    def insert_article_embedding(
+        self, article: ArticleInput, faiss_index_id: int
+    ) -> None:
         with self._connect() as conn:
             conn.execute(
                 """
@@ -122,7 +128,9 @@ class SemanticLinker:
             )
             conn.commit()
 
-    def store_semantic_matches(self, article_id: str, matches: list[SemanticMatchResult]) -> None:
+    def store_semantic_matches(
+        self, article_id: str, matches: list[SemanticMatchResult]
+    ) -> None:
         if not matches:
             return
 
@@ -166,7 +174,10 @@ class SemanticLinker:
         ORDER BY created_at DESC, similarity_score DESC
         """
 
-        with self._connect() as conn, destination.open("w", newline="", encoding="utf-8") as handle:
+        with (
+            self._connect() as conn,
+            destination.open("w", newline="", encoding="utf-8") as handle,
+        ):
             writer = csv.writer(handle)
             writer.writerow(
                 [
@@ -194,7 +205,9 @@ class SemanticLinker:
             ).fetchone()
         return _row_to_dict(row)
 
-    def get_article_metadata_by_faiss_id(self, faiss_index_id: int) -> dict[str, Any] | None:
+    def get_article_metadata_by_faiss_id(
+        self, faiss_index_id: int
+    ) -> dict[str, Any] | None:
         with self._connect() as conn:
             row = conn.execute(
                 """
@@ -206,18 +219,18 @@ class SemanticLinker:
             ).fetchone()
         return _row_to_dict(row)
 
-    def rebuild_index_from_database(self, embedding_lookup: dict[str, np.ndarray]) -> faiss.Index:
+    def rebuild_index_from_database(
+        self, embedding_lookup: dict[str, np.ndarray]
+    ) -> faiss.Index:
         dimension = self.embedding_service.dimension()
         rebuilt = faiss.IndexFlatIP(dimension)
 
         with self._connect() as conn:
-            rows = conn.execute(
-                """
+            rows = conn.execute("""
                 SELECT article_id
                 FROM article_embeddings
                 ORDER BY faiss_index_id ASC
-                """
-            ).fetchall()
+                """).fetchall()
 
         vectors: list[np.ndarray] = []
         for (article_id,) in rows:
@@ -236,8 +249,7 @@ class SemanticLinker:
 
     def _initialize_database(self) -> None:
         with self._connect() as conn:
-            conn.execute(
-                """
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS article_embeddings (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     article_id TEXT UNIQUE NOT NULL,
@@ -249,10 +261,8 @@ class SemanticLinker:
                     faiss_index_id INTEGER UNIQUE,
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP
                 )
-                """
-            )
-            conn.execute(
-                """
+                """)
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS semantic_matches (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     article_id TEXT NOT NULL,
@@ -263,10 +273,8 @@ class SemanticLinker:
                     FOREIGN KEY(article_id) REFERENCES article_embeddings(article_id),
                     FOREIGN KEY(matched_article_id) REFERENCES article_embeddings(article_id)
                 )
-                """
-            )
-            conn.execute(
-                """
+                """)
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS event_links (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     event_cluster_id TEXT NOT NULL,
@@ -275,32 +283,23 @@ class SemanticLinker:
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY(article_id) REFERENCES article_embeddings(article_id)
                 )
-                """
-            )
-            conn.execute(
-                """
+                """)
+            conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_article_embeddings_article_id
                 ON article_embeddings(article_id)
-                """
-            )
-            conn.execute(
-                """
+                """)
+            conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_article_embeddings_faiss_index_id
                 ON article_embeddings(faiss_index_id)
-                """
-            )
-            conn.execute(
-                """
+                """)
+            conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_semantic_matches_article_id
                 ON semantic_matches(article_id)
-                """
-            )
-            conn.execute(
-                """
+                """)
+            conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_semantic_matches_matched_article_id
                 ON semantic_matches(matched_article_id)
-                """
-            )
+                """)
             conn.commit()
 
     def _connect(self) -> sqlite3.Connection:
@@ -311,8 +310,14 @@ class SemanticLinker:
     def _validate_article(article: ArticleInput) -> None:
         if not article.article_id.strip():
             raise ValueError("article_id is required.")
-        if not ((article.title and article.title.strip()) or (article.text and article.text.strip()) or (article.summary and article.summary.strip())):
-            raise ValueError("At least one of title, summary, or text must be provided.")
+        if not (
+            (article.title and article.title.strip())
+            or (article.text and article.text.strip())
+            or (article.summary and article.summary.strip())
+        ):
+            raise ValueError(
+                "At least one of title, summary, or text must be provided."
+            )
 
 
 def _row_to_dict(row: tuple[Any, ...] | None) -> dict[str, Any] | None:

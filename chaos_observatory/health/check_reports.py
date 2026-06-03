@@ -25,7 +25,9 @@ def run(project_root: Path) -> list[dict]:
             "title": "Health report item",
             "body_text": "Emergency teams reported stable operations and routine support.",
         }
-        (partition / "health.jsonl").write_text(json.dumps(sample) + "\n", encoding="utf-8")
+        (partition / "health.jsonl").write_text(
+            json.dumps(sample) + "\n", encoding="utf-8"
+        )
 
         try:
             with redirect_stdout(StringIO()):

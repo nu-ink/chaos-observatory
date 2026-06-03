@@ -34,7 +34,6 @@ import pandas as pd
 from sklearn.cluster import HDBSCAN
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-
 DEFAULT_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
@@ -111,8 +110,7 @@ def build_document_text(row: pd.Series) -> str:
 
 def ensure_tables(conn: sqlite3.Connection) -> None:
     """Create discovery tables if they do not already exist."""
-    conn.executescript(
-        """
+    conn.executescript("""
         CREATE TABLE IF NOT EXISTS topic_runs (
             run_id TEXT PRIMARY KEY,
             created_at TEXT NOT NULL,
@@ -161,8 +159,7 @@ def ensure_tables(conn: sqlite3.Connection) -> None:
             created_at TEXT NOT NULL,
             PRIMARY KEY (run_id, cluster_id)
         );
-        """
-    )
+        """)
     conn.commit()
 
 
@@ -279,7 +276,9 @@ def embed_documents(
 
     for idx, row in df.iterrows():
         current_hash = text_hash(row["text"])
-        cached = get_cached_embedding(conn, row["document_id"], model_name, current_hash)
+        cached = get_cached_embedding(
+            conn, row["document_id"], model_name, current_hash
+        )
 
         if cached is not None:
             embeddings.append(cached)
@@ -562,7 +561,9 @@ def run(args: argparse.Namespace) -> None:
     db_path = Path(args.db)
     report_path = Path(args.output)
 
-    run_id = dt.datetime.now(dt.timezone.utc).strftime("topic-convergence-%Y%m%dT%H%M%SZ")
+    run_id = dt.datetime.now(dt.timezone.utc).strftime(
+        "topic-convergence-%Y%m%dT%H%M%SZ"
+    )
 
     with sqlite3.connect(db_path) as conn:
         df = load_records(conn, args.since)
@@ -615,8 +616,7 @@ def run(args: argparse.Namespace) -> None:
 
 def run_dry_run() -> dict[str, Any]:
     with sqlite3.connect(":memory:") as conn:
-        conn.execute(
-            """
+        conn.execute("""
             CREATE TABLE documents (
                 doc_id TEXT PRIMARY KEY,
                 normalized_at_utc TEXT NOT NULL,
@@ -632,8 +632,7 @@ def run_dry_run() -> dict[str, Any]:
                 body_text TEXT,
                 raw_json TEXT
             )
-            """
-        )
+            """)
         conn.execute(
             """
             INSERT INTO documents (

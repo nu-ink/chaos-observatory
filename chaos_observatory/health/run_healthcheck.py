@@ -12,7 +12,6 @@ from chaos_observatory.health import (
     check_reports,
 )
 
-
 CHECK_MODULES = [
     ("config", check_config),
     ("database", check_database),
@@ -44,8 +43,12 @@ def print_table(rows: list[dict]) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Run Chaos Observatory pre-flight health checks.")
-    parser.add_argument("--json", action="store_true", help="Emit JSON instead of a text table")
+    parser = argparse.ArgumentParser(
+        description="Run Chaos Observatory pre-flight health checks."
+    )
+    parser.add_argument(
+        "--json", action="store_true", help="Emit JSON instead of a text table"
+    )
     args = parser.parse_args(argv)
 
     rows = run_all(project_root())

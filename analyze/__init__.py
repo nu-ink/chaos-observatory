@@ -74,4 +74,3 @@ def cli(argv=None) -> int:
 
 
 __all__ = ["analyzers", "cli"]
-

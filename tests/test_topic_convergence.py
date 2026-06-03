@@ -10,8 +10,7 @@ from ml import ml_topic_convergence
 def test_load_records_reads_repo_documents_schema(tmp_path):
     db_path = tmp_path / "chaos.db"
     with sqlite3.connect(db_path) as conn:
-        conn.execute(
-            """
+        conn.execute("""
             CREATE TABLE documents (
                 doc_id TEXT PRIMARY KEY,
                 normalized_at_utc TEXT NOT NULL,
@@ -27,8 +26,7 @@ def test_load_records_reads_repo_documents_schema(tmp_path):
                 body_text TEXT,
                 raw_json TEXT
             )
-            """
-        )
+            """)
         conn.execute(
             """
             INSERT INTO documents (

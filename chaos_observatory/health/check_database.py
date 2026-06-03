@@ -9,7 +9,9 @@ def run(project_root: Path) -> list[dict]:
     schema_path = project_root / "storage" / "schema.sql"
     results = [
         _result("schema file exists", schema_path.exists(), str(schema_path)),
-        _result("database path parent exists", db_path.parent.exists(), str(db_path.parent)),
+        _result(
+            "database path parent exists", db_path.parent.exists(), str(db_path.parent)
+        ),
     ]
 
     try:

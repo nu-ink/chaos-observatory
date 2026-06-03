@@ -9,7 +9,9 @@ def test_vector_store_add_and_search() -> None:
     index = create_index(3)
     added_id = add_vector(index, np.array([1.0, 0.0, 0.0], dtype=np.float32))
 
-    distances, ids = search_vectors(index, np.array([1.0, 0.0, 0.0], dtype=np.float32), top_k=5)
+    distances, ids = search_vectors(
+        index, np.array([1.0, 0.0, 0.0], dtype=np.float32), top_k=5
+    )
 
     assert added_id == 0
     assert ids.tolist() == [[0]]

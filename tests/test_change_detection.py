@@ -55,9 +55,21 @@ def test_aggregate_counts_fills_expected_group_counts():
 def test_time_to_detection_keeps_first_non_negative_detection():
     alerts = pd.DataFrame(
         [
-            {"source": "BBC", "topic": "world", "breakpoint_time": "2026-05-29T23:00:00Z"},
-            {"source": "BBC", "topic": "world", "breakpoint_time": "2026-05-30T01:30:00Z"},
-            {"source": "BBC", "topic": "world", "breakpoint_time": "2026-05-30T03:00:00Z"},
+            {
+                "source": "BBC",
+                "topic": "world",
+                "breakpoint_time": "2026-05-29T23:00:00Z",
+            },
+            {
+                "source": "BBC",
+                "topic": "world",
+                "breakpoint_time": "2026-05-30T01:30:00Z",
+            },
+            {
+                "source": "BBC",
+                "topic": "world",
+                "breakpoint_time": "2026-05-30T03:00:00Z",
+            },
         ]
     )
     incidents = pd.DataFrame(

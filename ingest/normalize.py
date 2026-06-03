@@ -40,16 +40,36 @@ def normalize_row(row: Dict) -> Dict:
     item = row.get("item") or {}
 
     source_id = first_present(row.get("source_id"), source.get("id"))
-    source_label = first_present(row.get("source_label"), source.get("label"), source_id)
+    source_label = first_present(
+        row.get("source_label"), source.get("label"), source_id
+    )
     region = first_present(row.get("region"), source.get("region"), "unknown")
     category = first_present(row.get("category"), source.get("category"), "unknown")
     feed_url = first_present(row.get("feed_url"), source.get("feed_url"))
 
     title = first_present(row.get("title"), item.get("title"))
-    url = first_present(row.get("link"), row.get("url"), item.get("link"), item.get("url"))
-    published_at = first_present(row.get("published_at_utc"), row.get("published_ts"), row.get("published"), item.get("published"))
-    summary = first_present(row.get("summary"), row.get("description"), item.get("summary"), item.get("description"))
-    body_text = first_present(row.get("body_text"), row.get("text"), row.get("content"), item.get("content"), summary)
+    url = first_present(
+        row.get("link"), row.get("url"), item.get("link"), item.get("url")
+    )
+    published_at = first_present(
+        row.get("published_at_utc"),
+        row.get("published_ts"),
+        row.get("published"),
+        item.get("published"),
+    )
+    summary = first_present(
+        row.get("summary"),
+        row.get("description"),
+        item.get("summary"),
+        item.get("description"),
+    )
+    body_text = first_present(
+        row.get("body_text"),
+        row.get("text"),
+        row.get("content"),
+        item.get("content"),
+        summary,
+    )
 
     return {
         "source_id": source_id,
@@ -77,8 +97,12 @@ def normalize_file(inp: Path, out: Path) -> int:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--in", dest="inp", required=True, help="Input JSONL file or directory")
-    parser.add_argument("--out", dest="out", required=True, help="Output JSONL file or directory")
+    parser.add_argument(
+        "--in", dest="inp", required=True, help="Input JSONL file or directory"
+    )
+    parser.add_argument(
+        "--out", dest="out", required=True, help="Output JSONL file or directory"
+    )
     args = parser.parse_args(argv)
 
     inp = Path(args.inp)

@@ -8,6 +8,7 @@ import numpy as np
 # Prefer native FAISS if available; otherwise provide a light-weight numpy fallback
 try:  # pragma: no cover - environment specific
     import faiss  # type: ignore
+
     _HAVE_FAISS = True
 except Exception:
     faiss = None  # type: ignore
@@ -43,7 +44,9 @@ class _NumpyIndex:
             raise ValueError("Query vector has wrong dimension")
 
         if self.ntotal == 0 or k == 0:
-            return np.empty((q.shape[0], 0), dtype=np.float32), np.empty((q.shape[0], 0), dtype=np.int64)
+            return np.empty((q.shape[0], 0), dtype=np.float32), np.empty(
+                (q.shape[0], 0), dtype=np.int64
+            )
 
         # inner-product distances
         scores = np.dot(q, self._vectors.T)
@@ -60,8 +63,6 @@ class _NumpyIndex:
         if idx < 0 or idx >= self.ntotal:
             raise IndexError("Index id out of range")
         return np.asarray(self._vectors[idx], dtype=np.float32)
-
-
 
 
 def create_index(dimension: int):
@@ -116,7 +117,9 @@ def add_vectors(index, vectors: np.ndarray) -> list[int]:
     return list(range(start, start + array.shape[0]))
 
 
-def search_vectors(index, query_vector: np.ndarray, top_k: int) -> tuple[np.ndarray, np.ndarray]:
+def search_vectors(
+    index, query_vector: np.ndarray, top_k: int
+) -> tuple[np.ndarray, np.ndarray]:
     if index.ntotal == 0:
         return np.empty((1, 0), dtype=np.float32), np.empty((1, 0), dtype=np.int64)
     query = _ensure_2d_float32(query_vector)

@@ -45,7 +45,6 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Set, Tuple
 
-
 # ----------------------------
 # Stopwords (extend later)
 # ----------------------------
@@ -162,7 +161,9 @@ def read_jsonl(path: Path) -> Iterable[dict]:
             yield json.loads(line)
 
 
-def load_docs(base_dir: Path, start_day: datetime, end_day: datetime, group_by: str) -> List[Doc]:
+def load_docs(
+    base_dir: Path, start_day: datetime, end_day: datetime, group_by: str
+) -> List[Doc]:
     docs: List[Doc] = []
     cur = start_day
     while cur <= end_day:
@@ -170,7 +171,9 @@ def load_docs(base_dir: Path, start_day: datetime, end_day: datetime, group_by: 
         if part.exists() and part.is_dir():
             for f in part.glob("*.jsonl"):
                 for row in read_jsonl(f):
-                    source_label = row.get("source_label") or row.get("source_id") or "unknown"
+                    source_label = (
+                        row.get("source_label") or row.get("source_id") or "unknown"
+                    )
                     region = row.get("region") or "unknown"
                     if group_by == "region":
                         group = region
@@ -204,7 +207,7 @@ def ngrams(tokens: Sequence[str], n: int) -> List[str]:
         return list(tokens)
     out: List[str] = []
     for i in range(0, len(tokens) - n + 1):
-        out.append(" ".join(tokens[i:i+n]))
+        out.append(" ".join(tokens[i : i + n]))
     return out
 
 
@@ -238,7 +241,9 @@ def build_counts(
     total_terms = 0
 
     for d in docs:
-        toks = tokenize(d.title + " " + d.body_text, stopwords=stopwords, min_len=min_token_len)
+        toks = tokenize(
+            d.title + " " + d.body_text, stopwords=stopwords, min_len=min_token_len
+        )
         terms_in_doc: Set[str] = set()
 
         for n in ngram_list:
@@ -361,8 +366,12 @@ def write_markdown(out_path: Path, result: dict) -> None:
     lines.append("# Chaos Observatory — Silence Detection")
     lines.append("")
     lines.append(f"**Generated (UTC):** {meta['generated_at_utc']}")
-    lines.append(f"**Current window (UTC):** {meta['current_start']} → {meta['current_end']}  ")
-    lines.append(f"**Baseline window (UTC):** {meta['baseline_start']} → {meta['baseline_end']}")
+    lines.append(
+        f"**Current window (UTC):** {meta['current_start']} → {meta['current_end']}  "
+    )
+    lines.append(
+        f"**Baseline window (UTC):** {meta['baseline_start']} → {meta['baseline_end']}"
+    )
     lines.append(f"**Group-by:** {meta['group_by']}")
     lines.append("")
     lines.append("## Summary")
@@ -379,7 +388,9 @@ def write_markdown(out_path: Path, result: dict) -> None:
     # Global silence
     lines.append("## Global Silence Signals")
     lines.append("")
-    lines.append("| Term | Silence Score | Drop Ratio | Base Cnt | Cur Cnt | Base DF | Cur DF |")
+    lines.append(
+        "| Term | Silence Score | Drop Ratio | Base Cnt | Cur Cnt | Base DF | Cur DF |"
+    )
     lines.append("|---|---:|---:|---:|---:|---:|---:|")
     for r in result["global_silence"][:40]:
         term = r["term"].replace("|", "\\|")
@@ -392,7 +403,9 @@ def write_markdown(out_path: Path, result: dict) -> None:
     # Volume dropouts
     lines.append("## Group Volume Dropouts")
     lines.append("")
-    lines.append("> Groups with large baseline volume that collapsed in the current window.")
+    lines.append(
+        "> Groups with large baseline volume that collapsed in the current window."
+    )
     lines.append("")
     lines.append("| Group | Baseline Docs | Current Docs | Doc Ratio | Drop Factor |")
     lines.append("|---|---:|---:|---:|---:|")
@@ -411,7 +424,9 @@ def write_markdown(out_path: Path, result: dict) -> None:
         for g, payload in list(per_group.items())[:10]:
             lines.append(f"### {g}")
             lines.append("")
-            lines.append("| Term | Silence Score | Base Cnt | Cur Cnt | Base DF | Cur DF |")
+            lines.append(
+                "| Term | Silence Score | Base Cnt | Cur Cnt | Base DF | Cur DF |"
+            )
             lines.append("|---|---:|---:|---:|---:|---:|")
             for r in payload["silence"][:15]:
                 term = r["term"].replace("|", "\\|")
@@ -426,23 +441,84 @@ def write_markdown(out_path: Path, result: dict) -> None:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--normalized-dir", default="data/normalized", help="Base normalized partition dir")
-    ap.add_argument("--end-date", default=None, help="UTC end date YYYY-MM-DD (default: today UTC)")
-    ap.add_argument("--window-days", type=int, default=7, help="Current window length in days")
-    ap.add_argument("--baseline-days", type=int, default=7, help="Baseline window length in days")
-    ap.add_argument("--group-by", choices=["region", "source"], default="region", help="Group docs by region or source")
+    ap.add_argument(
+        "--normalized-dir",
+        default="data/normalized",
+        help="Base normalized partition dir",
+    )
+    ap.add_argument(
+        "--end-date", default=None, help="UTC end date YYYY-MM-DD (default: today UTC)"
+    )
+    ap.add_argument(
+        "--window-days", type=int, default=7, help="Current window length in days"
+    )
+    ap.add_argument(
+        "--baseline-days", type=int, default=7, help="Baseline window length in days"
+    )
+    ap.add_argument(
+        "--group-by",
+        choices=["region", "source"],
+        default="region",
+        help="Group docs by region or source",
+    )
     ap.add_argument("--ngrams", default="1,2", help="Comma list: 1,2 or 1 (max 4)")
-    ap.add_argument("--min-token-len", type=int, default=3, help="Minimum token length for unigrams")
-    ap.add_argument("--min-docs", type=int, default=10, help="Require at least this many docs per window (global)")
-    ap.add_argument("--min-base-count", type=int, default=18, help="Minimum baseline token count for candidate term")
-    ap.add_argument("--min-base-df", type=int, default=6, help="Minimum baseline doc frequency for candidate term")
-    ap.add_argument("--max-cur-count", type=int, default=0, help="Max current token count for 'silenced' term (0=vanished)")
-    ap.add_argument("--max-cur-df", type=int, default=0, help="Max current doc frequency for 'silenced' term")
-    ap.add_argument("--top", type=int, default=60, help="Top global silence terms to return")
-    ap.add_argument("--per-group", action="store_true", help="Also compute silence per group")
-    ap.add_argument("--min-docs-per-group", type=int, default=10, help="Min docs per group per window for per-group silence")
-    ap.add_argument("--dropout-min-base-docs", type=int, default=10, help="Min baseline docs for group dropout detection")
-    ap.add_argument("--dropout-ratio", type=float, default=0.30, help="Flag groups with current/baseline doc ratio <= this")
+    ap.add_argument(
+        "--min-token-len", type=int, default=3, help="Minimum token length for unigrams"
+    )
+    ap.add_argument(
+        "--min-docs",
+        type=int,
+        default=10,
+        help="Require at least this many docs per window (global)",
+    )
+    ap.add_argument(
+        "--min-base-count",
+        type=int,
+        default=18,
+        help="Minimum baseline token count for candidate term",
+    )
+    ap.add_argument(
+        "--min-base-df",
+        type=int,
+        default=6,
+        help="Minimum baseline doc frequency for candidate term",
+    )
+    ap.add_argument(
+        "--max-cur-count",
+        type=int,
+        default=0,
+        help="Max current token count for 'silenced' term (0=vanished)",
+    )
+    ap.add_argument(
+        "--max-cur-df",
+        type=int,
+        default=0,
+        help="Max current doc frequency for 'silenced' term",
+    )
+    ap.add_argument(
+        "--top", type=int, default=60, help="Top global silence terms to return"
+    )
+    ap.add_argument(
+        "--per-group", action="store_true", help="Also compute silence per group"
+    )
+    ap.add_argument(
+        "--min-docs-per-group",
+        type=int,
+        default=10,
+        help="Min docs per group per window for per-group silence",
+    )
+    ap.add_argument(
+        "--dropout-min-base-docs",
+        type=int,
+        default=10,
+        help="Min baseline docs for group dropout detection",
+    )
+    ap.add_argument(
+        "--dropout-ratio",
+        type=float,
+        default=0.30,
+        help="Flag groups with current/baseline doc ratio <= this",
+    )
     ap.add_argument("--md-out", default=None, help="Optional markdown output path")
     args = ap.parse_args(argv)
 
@@ -470,15 +546,25 @@ def main(argv=None) -> int:
             "docs_current": len(docs_cur),
             "docs_baseline": len(docs_base),
             "min_docs": args.min_docs,
-            "current_window": {"start": day_to_partition(cur_start), "end": day_to_partition(end_day)},
-            "baseline_window": {"start": day_to_partition(base_start), "end": day_to_partition(base_end)},
+            "current_window": {
+                "start": day_to_partition(cur_start),
+                "end": day_to_partition(end_day),
+            },
+            "baseline_window": {
+                "start": day_to_partition(base_start),
+                "end": day_to_partition(base_end),
+            },
         }
         print(json.dumps(out, ensure_ascii=False))
         return 2
 
     # Global counts
-    cur_counts, cur_df, cur_total = build_counts(docs_cur, ngram_list, STOPWORDS, args.min_token_len)
-    base_counts, base_df, base_total = build_counts(docs_base, ngram_list, STOPWORDS, args.min_token_len)
+    cur_counts, cur_df, cur_total = build_counts(
+        docs_cur, ngram_list, STOPWORDS, args.min_token_len
+    )
+    base_counts, base_df, base_total = build_counts(
+        docs_base, ngram_list, STOPWORDS, args.min_token_len
+    )
 
     global_silence = silence_rank(
         base_counts=base_counts,
@@ -507,7 +593,9 @@ def main(argv=None) -> int:
     result = {
         "event": "silence_detection",
         "meta": {
-            "generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "generated_at_utc": datetime.now(timezone.utc).isoformat(
+                timespec="seconds"
+            ),
             "current_start": day_to_partition(cur_start),
             "current_end": day_to_partition(end_day),
             "baseline_start": day_to_partition(base_start),
@@ -544,11 +632,18 @@ def main(argv=None) -> int:
         for g in sorted(set(cur_by.keys()) & set(base_by.keys())):
             cur_docs_g = cur_by[g]
             base_docs_g = base_by[g]
-            if len(cur_docs_g) < args.min_docs_per_group or len(base_docs_g) < args.min_docs_per_group:
+            if (
+                len(cur_docs_g) < args.min_docs_per_group
+                or len(base_docs_g) < args.min_docs_per_group
+            ):
                 continue
 
-            g_cur_counts, g_cur_df, g_cur_total = build_counts(cur_docs_g, ngram_list, STOPWORDS, args.min_token_len)
-            g_base_counts, g_base_df, g_base_total = build_counts(base_docs_g, ngram_list, STOPWORDS, args.min_token_len)
+            g_cur_counts, g_cur_df, g_cur_total = build_counts(
+                cur_docs_g, ngram_list, STOPWORDS, args.min_token_len
+            )
+            g_base_counts, g_base_df, g_base_total = build_counts(
+                base_docs_g, ngram_list, STOPWORDS, args.min_token_len
+            )
 
             g_silence = silence_rank(
                 base_counts=g_base_counts,
