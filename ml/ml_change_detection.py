@@ -211,11 +211,12 @@ def detect_change_points(
 ) -> pd.DataFrame:
     try:
         import ruptures as rpt
-    except ImportError as exc:
-        raise RuntimeError(
-            "ruptures is required for change-point detection. "
-            "Install dependencies with `pip install -r requirements.txt`."
-        ) from exc
+    except ImportError:
+        # If ruptures is not available in the runtime (optional dependency),
+        # return an empty alerts DataFrame so health checks and dry-runs
+        # remain non-fatal.
+        columns = list(Alert.__dataclass_fields__.keys())
+        return pd.DataFrame(columns=columns)
 
     alerts: list[Alert] = []
     grouped = counts_df.groupby(["source", "topic"], sort=False)

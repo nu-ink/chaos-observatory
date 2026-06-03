@@ -6,7 +6,6 @@ from functools import lru_cache
 from typing import Iterable, Sequence
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,6 +50,14 @@ def build_embedding_text(article: ArticleInput) -> str:
 
 @lru_cache(maxsize=4)
 def load_embedding_model(model_name: str) -> SentenceTransformer:
+    try:
+        from sentence_transformers import SentenceTransformer
+    except Exception as e:  # pragma: no cover - import/runtime environment
+        raise ImportError(
+            "sentence-transformers is required to load embedding models. "
+            "Install with: pip install sentence-transformers"
+        ) from e
+
     return SentenceTransformer(model_name)
 
 
