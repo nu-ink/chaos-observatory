@@ -314,7 +314,7 @@ def build_report(
     lines.append("## 3) Term Drift (Rise vs Baseline)")
     lines.append("")
     if not docs_baseline:
-        lines.append("_Baseline disabled — drift section unavailable._")
+        lines.append("_Baseline disabled — set `--baseline-days` > 0 to enable drift section (e.g. `--baseline-days 7`)._")
     elif not drift:
         lines.append("_No drift terms met thresholds._")
     else:
@@ -366,7 +366,7 @@ def build_report(
     lines.append("## 5) Silence Indicators (Present in Baseline, Missing Now)")
     lines.append("")
     if not docs_baseline:
-        lines.append("_Baseline disabled — silence section unavailable._")
+        lines.append("_Baseline disabled — set `--baseline-days` > 0 to enable silence indicators (e.g. `--baseline-days 7`)._")
     elif not silence:
         lines.append("_No strong baseline terms fully disappeared in the current window._")
     else:
