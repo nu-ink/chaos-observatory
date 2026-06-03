@@ -86,7 +86,7 @@ SOURCE_QUERIES = (
 
 def utc_now() -> str:
     """Return a UTC timestamp string."""
-    return dt.datetime.now(dt.UTC).isoformat(timespec="seconds")
+    return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
 
 
 def stable_text_id(row: pd.Series) -> str:
@@ -562,7 +562,7 @@ def run(args: argparse.Namespace) -> None:
     db_path = Path(args.db)
     report_path = Path(args.output)
 
-    run_id = dt.datetime.now(dt.UTC).strftime("topic-convergence-%Y%m%dT%H%M%SZ")
+    run_id = dt.datetime.now(dt.timezone.utc).strftime("topic-convergence-%Y%m%dT%H%M%SZ")
 
     with sqlite3.connect(db_path) as conn:
         df = load_records(conn, args.since)
