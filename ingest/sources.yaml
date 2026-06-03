@@ -14,7 +14,7 @@ sources:
     label: "BBC News - World"
     kind: rss
     region: global
-    category: news.agency
+    category: news.world
     enabled: true
     feeds:
       - url: "https://feeds.bbci.co.uk/news/world/rss.xml"
@@ -25,7 +25,6 @@ sources:
     region: usa
     category: financial.central_bank
     enabled: true
-    # Tip: the Fed maintains many feeds; start with press releases.
     feeds:
       - url: "https://www.federalreserve.gov/feeds/press_all.xml"
 
@@ -35,7 +34,6 @@ sources:
     region: europe
     category: financial.central_bank
     enabled: true
-    # ECB provides multiple RSS feeds; this is commonly used for press releases.
     feeds:
       - url: "https://www.ecb.europa.eu/rss/press.html"
 
@@ -45,6 +43,591 @@ sources:
     region: global
     category: humanitarian
     enabled: true
-    # ReliefWeb supports RSS subscriptions; this is a solid early-warning source.
     feeds:
       - url: "https://reliefweb.int/updates/rss.xml"
+
+  - id: cnn_world
+    label: "CNN.com - RSS Channel - World"
+    kind: rss
+    region: global
+    category: news.world
+    enabled: false
+    feeds:
+      - url: "https://rss.cnn.com/rss/edition_world.rss"
+
+  - id: cnbc_international
+    label: "International: Top News And Analysis"
+    kind: rss
+    region: global
+    category: news.business
+    enabled: true
+    feeds:
+      - url: "https://www.cnbc.com/id/100727362/device/rss/rss.html"
+
+  - id: ndtv_world_news
+    label: "NDTV News - World-news"
+    kind: rss
+    region: global
+    category: news.world
+    enabled: true
+    feeds:
+      - url: "https://feeds.feedburner.com/ndtvnews-world-news"
+
+  - id: nyt_world
+    label: "NYT > World News"
+    kind: rss
+    region: global
+    category: news.world
+    enabled: true
+    feeds:
+      - url: "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
+
+  - id: google_news_top
+    label: "Top stories - Google News"
+    kind: rss
+    region: global
+    category: news.aggregator
+    enabled: true
+    feeds:
+      - url: "https://news.google.com/rss"
+
+  - id: washington_post_world
+    label: "Washington Post - World"
+    kind: rss
+    region: global
+    category: news.world
+    enabled: true
+    feeds:
+      - url: "https://feeds.washingtonpost.com/rss/world"
+
+  - id: reddit_worldnews
+    label: "World News - Reddit"
+    kind: rss
+    region: global
+    category: news.community
+    enabled: true
+    feeds:
+      - url: "https://www.reddit.com/r/worldnews/.rss"
+
+  - id: times_of_india_world
+    label: "Times of India - World"
+    kind: rss
+    region: global
+    category: news.world
+    enabled: true
+    feeds:
+      - url: "https://timesofindia.indiatimes.com/rssfeeds/296589292.cms"
+
+  - id: guardian_world
+    label: "The Guardian - World"
+    kind: rss
+    region: global
+    category: news.world
+    enabled: true
+    feeds:
+      - url: "https://www.theguardian.com/world/rss"
+
+  - id: yahoo_news_latest
+    label: "Yahoo News - Latest"
+    kind: rss
+    region: global
+    category: news.aggregator
+    enabled: false
+    feeds:
+      - url: "https://www.yahoo.com/news/rss"
+
+  - id: huffpost_world_news
+    label: "HuffPost - World News"
+    kind: rss
+    region: global
+    category: news.world
+    enabled: true
+    feeds:
+      - url: "https://www.huffpost.com/section/world-news/feed"
+
+  - id: nyt_top_stories
+    label: "NYT - Top Stories"
+    kind: rss
+    region: usa
+    category: news.general
+    enabled: true
+    feeds:
+      - url: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
+
+  - id: fox_news_latest
+    label: "FOX News - Latest"
+    kind: rss
+    region: usa
+    category: news.general
+    enabled: true
+    feeds:
+      - url: "https://feeds.foxnews.com/foxnews/latest"
+
+  - id: wsj_world_news
+    label: "WSJ - World News"
+    kind: rss
+    region: global
+    category: news.world
+    enabled: true
+    feeds:
+      - url: "https://feeds.a.dj.com/rss/RSSWorldNews.xml"
+
+  - id: latimes_world_nation
+    label: "LA Times - World & Nation"
+    kind: rss
+    region: global
+    category: news.world
+    enabled: true
+    feeds:
+      - url: "https://www.latimes.com/world-nation/rss2.0.xml"
+
+  - id: cnn_international
+    label: "CNN - International"
+    kind: rss
+    region: global
+    category: news.world
+    enabled: false
+    feeds:
+      - url: "https://rss.cnn.com/rss/edition.rss"
+
+  - id: yahoo_news_most_viewed
+    label: "Yahoo News - Most Viewed"
+    kind: rss
+    region: global
+    category: news.aggregator
+    enabled: true
+    feeds:
+      - url: "https://news.yahoo.com/rss/mostviewed"
+
+  - id: cnbc_us_top_news
+    label: "CNBC - US Top News"
+    kind: rss
+    region: usa
+    category: news.business
+    enabled: true
+    feeds:
+      - url: "https://www.cnbc.com/id/100003114/device/rss/rss.html"
+
+  - id: politico_playbook
+    label: "Politico - Playbook"
+    kind: rss
+    region: usa
+    category: news.politics
+    enabled: true
+    feeds:
+      - url: "https://rss.politico.com/playbook.xml"
+
+  - id: avc
+    label: "AVC"
+    kind: rss
+    region: global
+    category: startup.venture
+    enabled: true
+    feeds:
+      - url: "https://avc.com/feed/"
+
+  - id: both_sides_table
+    label: "Both Sides of the Table - Medium"
+    kind: rss
+    region: global
+    category: startup.venture
+    enabled: false
+    feeds:
+      - url: "https://bothsidesofthetable.com/feed"
+
+  - id: entrepreneur
+    label: "Entrepreneur"
+    kind: rss
+    region: global
+    category: startup.business
+    enabled: true
+    feeds:
+      - url: "http://feeds.feedburner.com/entrepreneur/latest"
+
+  - id: feld_thoughts
+    label: "Feld Thoughts"
+    kind: rss
+    region: global
+    category: startup.venture
+    enabled: true
+    feeds:
+      - url: "https://feld.com/feed"
+
+  - id: forbes_entrepreneurs
+    label: "Forbes - Entrepreneurs"
+    kind: rss
+    region: global
+    category: startup.business
+    enabled: false
+    feeds:
+      - url: "https://www.forbes.com/entrepreneurs/feed/"
+
+  - id: garyvee
+    label: "GaryVee"
+    kind: rss
+    region: global
+    category: startup.video
+    enabled: true
+    feeds:
+      - url: "https://www.youtube.com/feeds/videos.xml?user=GaryVaynerchuk"
+
+  - id: hacker_news_frontpage
+    label: "Hacker News: Front Page"
+    kind: rss
+    region: global
+    category: startup.tech
+    enabled: true
+    feeds:
+      - url: "https://hnrss.org/frontpage"
+
+  - id: inc_com
+    label: "Inc.com"
+    kind: rss
+    region: global
+    category: startup.business
+    enabled: true
+    feeds:
+      - url: "https://www.inc.com/rss/"
+
+  - id: inside_intercom
+    label: "Inside Intercom"
+    kind: rss
+    region: global
+    category: startup.general
+    enabled: true
+    feeds:
+      - url: "https://www.intercom.com/blog/feed"
+
+  - id: marie_forleo
+    label: "Marie Forleo"
+    kind: rss
+    region: global
+    category: startup.video
+    enabled: true
+    feeds:
+      - url: "https://www.youtube.com/feeds/videos.xml?user=marieforleo"
+
+  - id: masters_of_scale
+    label: "Masters of Scale with Reid Hoffman"
+    kind: rss
+    region: global
+    category: startup.podcast
+    enabled: true
+    feeds:
+      - url: "https://rss.art19.com/masters-of-scale"
+
+  - id: paul_graham_essays
+    label: "Paul Graham: Essays"
+    kind: rss
+    region: global
+    category: startup.venture
+    enabled: true
+    feeds:
+      - url: "http://www.aaronsw.com/2002/feeds/pgessays.rss"
+
+  - id: product_hunt
+    label: "Product Hunt — The best new products, every day"
+    kind: rss
+    region: global
+    category: startup.tech
+    enabled: true
+    feeds:
+      - url: "https://www.producthunt.com/feed"
+
+  - id: quick_sprout
+    label: "Quick Sprout"
+    kind: rss
+    region: global
+    category: startup.business
+    enabled: true
+    feeds:
+      - url: "https://www.quicksprout.com/rss"
+
+  - id: small_business_trends
+    label: "Small Business Trends"
+    kind: rss
+    region: global
+    category: startup.business
+    enabled: true
+    feeds:
+      - url: "https://feeds2.feedburner.com/SmallBusinessTrends"
+
+  - id: smart_passive_income
+    label: "Smart Passive Income"
+    kind: rss
+    region: global
+    category: startup.business
+    enabled: true
+    feeds:
+      - url: "http://feeds.feedburner.com/smartpassiveincome"
+
+  - id: springwise
+    label: "Springwise"
+    kind: rss
+    region: global
+    category: startup.business
+    enabled: false
+    feeds:
+      - url: "https://www.springwise.com/feed"
+
+  - id: steve_blank
+    label: "Steve Blank"
+    kind: rss
+    region: global
+    category: startup.venture
+    enabled: true
+    feeds:
+      - url: "https://steveblank.com/feed/"
+
+  - id: startup_junkies_podcast
+    label: "The Startup Junkies Podcast"
+    kind: rss
+    region: global
+    category: startup.podcast
+    enabled: true
+    feeds:
+      - url: "https://startupjunkie.libsyn.com/rss"
+
+  - id: tim_ferriss_show
+    label: "The Tim Ferriss Show"
+    kind: rss
+    region: global
+    category: startup.podcast
+    enabled: true
+    feeds:
+      - url: "https://rss.art19.com/tim-ferriss-show"
+
+  - id: this_week_in_startups_video
+    label: "This Week in Startups - Video"
+    kind: rss
+    region: global
+    category: startup.general
+    enabled: true
+    feeds:
+      - url: "http://feeds.feedburner.com/twistvid"
+
+  - id: venturebeat
+    label: "VentureBeat"
+    kind: rss
+    region: global
+    category: startup.tech
+    enabled: true
+    feeds:
+      - url: "https://feeds.feedburner.com/venturebeat/SZYF"
+
+  - id: feld_thoughts_blog
+    label: "blog – Feld Thoughts"
+    kind: rss
+    region: global
+    category: startup.venture
+    enabled: true
+    feeds:
+      - url: "https://feld.com/archives/tag/blog/feed"
+
+
+  - id: avc
+    label: "AVC"
+    kind: rss
+    region: global
+    category: startup.venture
+    enabled: true
+    feeds:
+      - url: "https://avc.com/feed/"
+
+  - id: both_sides_table
+    label: "Both Sides of the Table - Medium"
+    kind: rss
+    region: global
+    category: startup.venture
+    enabled: false
+    feeds:
+      - url: "https://bothsidesofthetable.com/feed"
+
+  - id: entrepreneur
+    label: "Entrepreneur"
+    kind: rss
+    region: global
+    category: startup.business
+    enabled: true
+    feeds:
+      - url: "http://feeds.feedburner.com/entrepreneur/latest"
+
+  - id: feld_thoughts
+    label: "Feld Thoughts"
+    kind: rss
+    region: global
+    category: startup.venture
+    enabled: true
+    feeds:
+      - url: "https://feld.com/feed"
+
+  - id: forbes_entrepreneurs
+    label: "Forbes - Entrepreneurs"
+    kind: rss
+    region: global
+    category: startup.business
+    enabled: false
+    feeds:
+      - url: "https://www.forbes.com/entrepreneurs/feed/"
+
+  - id: garyvee
+    label: "GaryVee"
+    kind: rss
+    region: global
+    category: startup.video
+    enabled: true
+    feeds:
+      - url: "https://www.youtube.com/feeds/videos.xml?user=GaryVaynerchuk"
+
+  - id: hacker_news_frontpage
+    label: "Hacker News: Front Page"
+    kind: rss
+    region: global
+    category: startup.tech
+    enabled: true
+    feeds:
+      - url: "https://hnrss.org/frontpage"
+
+  - id: inc_com
+    label: "Inc.com"
+    kind: rss
+    region: global
+    category: startup.business
+    enabled: true
+    feeds:
+      - url: "https://www.inc.com/rss/"
+
+  - id: inside_intercom
+    label: "Inside Intercom"
+    kind: rss
+    region: global
+    category: startup.general
+    enabled: true
+    feeds:
+      - url: "https://www.intercom.com/blog/feed"
+
+  - id: marie_forleo
+    label: "Marie Forleo"
+    kind: rss
+    region: global
+    category: startup.video
+    enabled: true
+    feeds:
+      - url: "https://www.youtube.com/feeds/videos.xml?user=marieforleo"
+
+  - id: masters_of_scale
+    label: "Masters of Scale with Reid Hoffman"
+    kind: rss
+    region: global
+    category: startup.podcast
+    enabled: true
+    feeds:
+      - url: "https://rss.art19.com/masters-of-scale"
+
+  - id: paul_graham_essays
+    label: "Paul Graham: Essays"
+    kind: rss
+    region: global
+    category: startup.venture
+    enabled: true
+    feeds:
+      - url: "http://www.aaronsw.com/2002/feeds/pgessays.rss"
+
+  - id: product_hunt
+    label: "Product Hunt — The best new products, every day"
+    kind: rss
+    region: global
+    category: startup.tech
+    enabled: true
+    feeds:
+      - url: "https://www.producthunt.com/feed"
+
+  - id: quick_sprout
+    label: "Quick Sprout"
+    kind: rss
+    region: global
+    category: startup.business
+    enabled: true
+    feeds:
+      - url: "https://www.quicksprout.com/rss"
+
+  - id: small_business_trends
+    label: "Small Business Trends"
+    kind: rss
+    region: global
+    category: startup.business
+    enabled: true
+    feeds:
+      - url: "https://feeds2.feedburner.com/SmallBusinessTrends"
+
+  - id: smart_passive_income
+    label: "Smart Passive Income"
+    kind: rss
+    region: global
+    category: startup.business
+    enabled: true
+    feeds:
+      - url: "http://feeds.feedburner.com/smartpassiveincome"
+
+  - id: springwise
+    label: "Springwise"
+    kind: rss
+    region: global
+    category: startup.business
+    enabled: false
+    feeds:
+      - url: "https://www.springwise.com/feed"
+
+  - id: steve_blank
+    label: "Steve Blank"
+    kind: rss
+    region: global
+    category: startup.venture
+    enabled: true
+    feeds:
+      - url: "https://steveblank.com/feed/"
+
+  - id: startup_junkies_podcast
+    label: "The Startup Junkies Podcast"
+    kind: rss
+    region: global
+    category: startup.podcast
+    enabled: true
+    feeds:
+      - url: "https://startupjunkie.libsyn.com/rss"
+
+  - id: tim_ferriss_show
+    label: "The Tim Ferriss Show"
+    kind: rss
+    region: global
+    category: startup.podcast
+    enabled: true
+    feeds:
+      - url: "https://rss.art19.com/tim-ferriss-show"
+
+  - id: this_week_in_startups_video
+    label: "This Week in Startups - Video"
+    kind: rss
+    region: global
+    category: startup.general
+    enabled: true
+    feeds:
+      - url: "http://feeds.feedburner.com/twistvid"
+
+  - id: venturebeat
+    label: "VentureBeat"
+    kind: rss
+    region: global
+    category: startup.tech
+    enabled: true
+    feeds:
+      - url: "https://feeds.feedburner.com/venturebeat/SZYF"
+
+  - id: feld_thoughts_blog
+    label: "blog – Feld Thoughts"
+    kind: rss
+    region: global
+    category: startup.venture
+    enabled: true
+    feeds:
+      - url: "https://feld.com/archives/tag/blog/feed"

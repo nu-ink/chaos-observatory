@@ -1,0 +1,62 @@
+version: 1
+
+defaults:
+  enabled: true
+  fetch_timeout_sec: 20
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115.0.0.0 Safari/537.36"
+  max_items_per_feed: 5
+
+sources:
+  - id: cnn_world
+    label: "CNN.com - RSS Channel - World"
+    kind: rss
+    region: global
+    category: news.world
+    enabled: true
+    feeds:
+      - url: "https://rss.cnn.com/rss/edition_world.rss"
+
+  - id: cnn_international
+    label: "CNN - International"
+    kind: rss
+    region: global
+    category: news.world
+    enabled: true
+    feeds:
+      - url: "https://rss.cnn.com/rss/edition.rss"
+
+  - id: yahoo_news_latest
+    label: "Yahoo News - Latest"
+    kind: rss
+    region: global
+    category: news.aggregator
+    enabled: true
+    feeds:
+      - url: "https://www.yahoo.com/news/rss"
+
+  - id: springwise
+    label: "Springwise"
+    kind: rss
+    region: global
+    category: news.tech
+    enabled: true
+    feeds:
+      - url: "https://www.springwise.com/feed"
+
+  - id: forbes_entrepreneurs
+    label: "Forbes - Entrepreneurs"
+    kind: rss
+    region: global
+    category: news.business
+    enabled: true
+    feeds:
+      - url: "https://www.forbes.com/entrepreneurs/feed/"
+
+  - id: both_sides_table
+    label: "Both Sides of the Table"
+    kind: rss
+    region: global
+    category: blog
+    enabled: true
+    feeds:
+      - url: "https://bothsidesofthetable.com/feed"
