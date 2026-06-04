@@ -22,7 +22,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Tuple
+from typing import (Any, Dict, Iterator, List, Optional, Sequence)
 
 DEFAULT_DB_PATH = "data/chaos_observatory.sqlite3"
 MAX_QUERY_LIMIT = 100000

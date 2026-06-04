@@ -8,16 +8,7 @@ Tests both rss_collector.py and normalize.py functionality.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from unittest.mock import patch
-
-import pytest
-
-import sys
-
-# Add parent directory to path
-parent_dir = Path(__file__).parent.parent
-sys.path.insert(0, str(parent_dir))
 
 from ingest import normalize, rss_collector
 

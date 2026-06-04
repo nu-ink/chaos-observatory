@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Iterable, Sequence
+from typing import Any, Iterable, Sequence
 
 import numpy as np
 
@@ -49,7 +49,7 @@ def build_embedding_text(article: ArticleInput) -> str:
 
 
 @lru_cache(maxsize=4)
-def load_embedding_model(model_name: str) -> SentenceTransformer:
+def load_embedding_model(model_name: str) -> Any:
     try:
         from sentence_transformers import SentenceTransformer
     except Exception as e:  # pragma: no cover - import/runtime environment

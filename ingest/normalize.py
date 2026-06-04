@@ -2,7 +2,7 @@
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Iterable, Dict, Optional
+from typing import Any, Dict, Iterable, Optional
 
 
 def read_jsonl(path: Path) -> Iterable[Dict]:

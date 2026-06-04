@@ -5,9 +5,10 @@ File locking utility for pipeline execution.
 Prevents concurrent pipeline runs by using a file lock.
 """
 
-import sys
 import logging
+import sys
 from pathlib import Path
+
 from filelock import FileLock, Timeout
 
 log = logging.getLogger(__name__)

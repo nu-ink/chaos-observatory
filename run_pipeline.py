@@ -11,8 +11,8 @@ Runs a single full cycle:
 Designed to be executed by systemd timer every 15 minutes.
 """
 
-import sys
 import logging
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -74,9 +74,9 @@ def run_analysis(day: str):
 
     # Import all analysis modules
     from analyze.frequency_drift import main as freq_main
-    from analyze.topic_convergence import main as conv_main
-    from analyze.silence_detection import main as silence_main
     from analyze.sentiment_shift import main as sentiment_main
+    from analyze.silence_detection import main as silence_main
+    from analyze.topic_convergence import main as conv_main
 
     analysis_steps = [
         (

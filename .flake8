@@ -1,3 +1,4 @@
 [flake8]
 max-line-length = 140
-exclude = .venv,venv
+exclude = .venv,venv,*.save,build,dist,run_pipeline.py.save
+extend-ignore = E203, W503

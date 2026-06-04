@@ -4,13 +4,8 @@ import argparse
 import json
 from pathlib import Path
 
-from chaos_observatory.health import (
-    check_config,
-    check_database,
-    check_ingest,
-    check_ml,
-    check_reports,
-)
+from chaos_observatory.health import (check_config, check_database,
+                                      check_ingest, check_ml, check_reports)
 
 CHECK_MODULES = [
     ("config", check_config),

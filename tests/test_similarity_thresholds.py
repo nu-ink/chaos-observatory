@@ -1,4 +1,5 @@
-from ml.ml_similarity_thresholds import SemanticSimilarityConfig, classify_score
+from ml.ml_similarity_thresholds import (SemanticSimilarityConfig,
+                                         classify_score)
 
 
 def test_classify_score_duplicate() -> None:

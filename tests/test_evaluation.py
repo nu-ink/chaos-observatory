@@ -1,9 +1,5 @@
-from ml.ml_evaluation import (
-    LabeledMatch,
-    duplicate_false_positive_rate,
-    precision_at_k,
-    recall_at_k,
-)
+from ml.ml_evaluation import (LabeledMatch, duplicate_false_positive_rate,
+                              precision_at_k, recall_at_k)
 
 
 def test_precision_at_k() -> None:

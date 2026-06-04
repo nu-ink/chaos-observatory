@@ -1,34 +1,32 @@
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-added-large-files
-
-  - repo: https://github.com/pre-commit/mirrors-black
-    rev: 23.9.1
+  - repo: local
     hooks:
       - id: black
-        args: ["--fast"]
+        name: black
+        entry: .venv/Scripts/black.exe
+        language: script
+        types: [python]
 
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.12.0
-    hooks:
       - id: isort
+        name: isort
+        entry: .venv/Scripts/isort.exe
+        language: script
+        types: [python]
 
-  - repo: https://github.com/PyCQA/flake8
-    rev: 6.1.0
-    hooks:
       - id: flake8
+        name: flake8
+        entry: .venv/Scripts/flake8.exe
+        language: script
+        types: [python]
 
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.5.0
-    hooks:
-      - id: detect-secrets-hook
-
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.9.4
-    hooks:
       - id: bandit
+        name: bandit
+        entry: .venv/Scripts/bandit.exe
+        language: script
+        args: ["-r", "."]
+
+      - id: detect-secrets
+        name: detect-secrets
+        entry: .venv/Scripts/detect-secrets.exe
+        language: script
+        args: ["scan"]

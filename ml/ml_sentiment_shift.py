@@ -25,7 +25,7 @@ import csv
 import json
 import math
 import statistics
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any

@@ -1,9 +1,7 @@
 import os
 import tempfile
-import json
-from pathlib import Path
 
-from storage.db import DB, DBConfig, open_db
+from storage.db import DB, DBConfig
 
 
 def _create_minimal_documents_table(conn):

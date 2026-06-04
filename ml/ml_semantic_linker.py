@@ -11,7 +11,8 @@ import numpy as np
 
 from .ml_embeddings import ArticleInput, EmbeddingService
 from .ml_similarity_thresholds import SemanticSimilarityConfig, classify_score
-from .vector_store import add_vector, load_index, save_index, search_vectors
+from .vector_store import (add_vector, create_index, load_index, save_index,
+                           search_vectors)
 
 
 @dataclass(frozen=True, slots=True)
@@ -221,9 +222,9 @@ class SemanticLinker:
 
     def rebuild_index_from_database(
         self, embedding_lookup: dict[str, np.ndarray]
-    ) -> faiss.Index:
+    ) -> Any:
         dimension = self.embedding_service.dimension()
-        rebuilt = faiss.IndexFlatIP(dimension)
+        rebuilt = create_index(dimension)
 
         with self._connect() as conn:
             rows = conn.execute("""
