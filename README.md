@@ -1,6 +1,6 @@
 # Chaos Observatory
 
-Chaos Observatory is a text-only global signal observatory. It collects public RSS feeds, stores raw and normalized records by UTC day, runs explainable analysis over recent windows, and is gradually adding machine-learning helpers for anomaly detection, semantic linking, and tone monitoring.
+Chaos Observatory is a text-only global signal observatory. It collects public RSS feeds, stores raw and normalized records by UTC day, runs explainable analysis over recent windows, and keeps an experimental ML layer for semantic linking, anomaly detection, clustering, and tone monitoring.
 
 The project is intentionally small and inspectable. It is not a prediction engine. The current build is designed to answer:
 
@@ -8,6 +8,7 @@ The project is intentionally small and inspectable. It is not a prediction engin
 - Which sources, regions, or topics are moving together?
 - Which signals went quiet?
 - Which tone or volume shifts deserve human review?
+- Which differently worded items appear to describe the same underlying event?
 
 Example signal chains the system is meant to observe:
 
@@ -16,12 +17,13 @@ Example signal chains the system is meant to observe:
 - Political unrest -> currency pressure -> capital flight
 - Disease outbreak -> news saturation -> public fatigue -> silence risk
 
-## Build Status
+## Current Build
 
-The working build has four layers:
+The working build has five main layers:
 
 1. **Collection and normalization**
    - RSS ingestion from `ingest/sources.yaml`
+   - Retry/source expansion support in `ingest/sources_retry.yaml`
    - Raw JSONL output under `data/raw/YYYY-MM-DD/`
    - Normalized JSONL output under `data/normalized/YYYY-MM-DD/`
 
@@ -35,19 +37,27 @@ The working build has four layers:
 3. **Storage and operations**
    - SQLite schema in `storage/schema.sql`
    - SQLite helper wrapper in `storage/db.py`
+   - Normalized JSONL -> SQLite import in `scripts/import_normalized_to_db.py`
    - Retention planning in `hold/retention.py`
    - `systemd` service template
    - `run_pipeline.py` orchestration
 
-4. **ML experiments**
+4. **Health, safety, and validation**
+   - Pre-flight checks under `chaos_observatory/health/`
+   - JSON health output via `scripts/print_health.py`
+   - Pre-commit configuration in `.pre-commit-config.yaml`
+   - Security scan artifacts from Bandit, pip-audit, Safety, and TruffleHog
+
+5. **ML experiments**
    - Change-point detection with `ruptures`
    - Semantic embeddings with `sentence-transformers`
    - FAISS vector-store helpers
    - Semantic article linking
    - ML-ready tone/sentiment shift script
+   - Topic clustering and convergence over SQLite documents
    - Evaluation and threshold helpers
 
-The ML layer is now functional enough for basic validation, but it is still experimental. The deterministic `analyze/` layer remains the main observatory path.
+The deterministic `analyze/` layer remains the main observatory path. The ML layer is functional enough for validation and review workflows, but should still be treated as experimental unless a workflow has explicit tests, thresholds, and human review.
 
 ## Architecture
 
@@ -67,25 +77,20 @@ The ML layer is now functional enough for basic validation, but it is still expe
    Date-Partitioned JSONL
  data/raw + data/normalized
             |
-            v
-   Explainable Analyzers
-        analyze/
-            |
-            v
-    Reports and Signals
-        report/
-
-Optional/Next Layer:
-
- normalized data / SQLite documents
-            |
-            v
-       ML Helpers
-          ml/
-            |
-            v
- semantic links, anomaly alerts,
- tone shifts, review artifacts
+            +----------------------+
+            |                      |
+            v                      v
+   Explainable Analyzers      SQLite Import
+        analyze/          scripts/import_normalized_to_db.py
+            |                      |
+            v                      v
+    Reports and Signals       ML Helpers
+        report/                  ml/
+                                   |
+                                   v
+                         semantic links, clusters,
+                         anomaly alerts, tone shifts,
+                         review artifacts
 ```
 
 ## Repository Structure
@@ -93,30 +98,22 @@ Optional/Next Layer:
 ```text
 chaos-observatory/
 ├── analyze/                     # Deterministic, explainable analyzers
-│   ├── frequency_drift.py
-│   ├── topic_convergence.py
-│   ├── silence_detection.py
-│   └── sentiment_shift.py
+├── chaos_observatory/health/     # Pre-flight health checks
 ├── config/
 │   └── chaos.yaml               # Runtime and analysis configuration
 ├── hold/
 │   └── retention.py             # Dry-run-first retention planning
 ├── ingest/
 │   ├── sources.yaml             # RSS source registry
+│   ├── sources_retry.yaml       # Alternate/retry source list
 │   ├── rss_collector.py         # Feed collection
 │   └── normalize.py             # Raw JSONL -> normalized JSONL
 ├── ml/                          # Experimental ML monitoring components
-│   ├── ml_change_detection.py
-│   ├── ml_embeddings.py
-│   ├── ml_evaluation.py
-│   ├── ml_semantic_linker.py
-│   ├── ml_sentiment_shift.py
-│   ├── ml_similarity_thresholds.py
-│   ├── ml_topic_convergence.py
-│   └── vector_store.py
 ├── report/
 │   └── weekly_report.py         # Markdown report generation
 ├── scripts/
+│   ├── import_normalized_to_db.py
+│   ├── print_health.py
 │   └── run_semantic_linker_demo.py
 ├── storage/
 │   ├── schema.sql               # SQLite-first schema
@@ -124,14 +121,14 @@ chaos-observatory/
 │   └── chaos.db                 # Local SQLite artifact, if present
 ├── systemd/
 │   └── chaos-observatory.service.ini
-├── tests/                       # Pytest coverage for ingest, ML helpers, and analyzers
+├── tests/                       # Pytest coverage for ingest, health, ML, and analyzers
 ├── run_pipeline.py              # Full ingest -> normalize -> analyze -> report runner
 ├── run_15min.sh                 # Lightweight shell helper
 ├── requirements.txt             # Runtime dependencies
 └── pyproject.toml               # Project/test metadata
 ```
 
-Runtime data is written under `data/`, `reports/`, and selected ML output paths. Those paths are operational artifacts rather than core source code.
+Runtime data is written under `data/`, `reports/`, `logs/`, `storage/`, and selected ML output paths. Treat those paths as operational artifacts rather than core source code.
 
 ## Requirements
 
@@ -149,27 +146,21 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Important ML dependencies include:
+Important runtime and ML dependencies include:
 
-- `scikit-learn`
+- `requests`, `feedparser`, `PyYAML`, `python-dateutil`
+- `numpy`, `pandas`, `scipy`, `scikit-learn`
 - `ruptures`
 - `sentence-transformers`
 - `faiss-cpu`
-- `numpy`
-- `pandas`
+- `SQLAlchemy`
+- `vaderSentiment`, `textblob`
 
 ## Source Configuration
 
 RSS feeds live in `ingest/sources.yaml`.
 
-Current source families include:
-
-- BBC News - World
-- US Federal Reserve press releases
-- European Central Bank press releases
-- ReliefWeb updates
-
-Each source declares an ID, label, region, category, enabled flag, and feed URLs.
+The current registry has 60 enabled sources across global news, central-bank updates, humanitarian feeds, business/startup feeds, technology feeds, and selected high-volume public aggregators. Each source declares an ID, label, region, category, enabled flag, and feed URLs.
 
 Project-level settings live in `config/chaos.yaml`, including:
 
@@ -179,6 +170,7 @@ Project-level settings live in `config/chaos.yaml`, including:
 - report settings
 - semantic similarity settings
 - retention defaults
+- scheduling-oriented defaults
 
 ## Running The Pipeline
 
@@ -195,7 +187,7 @@ The runner performs:
 3. deterministic analysis
 4. weekly report generation
 
-Some analyzers may return `insufficient_docs` until enough baseline partitions exist.
+Some analyzers may return `insufficient_docs` until enough baseline partitions exist. The pipeline treats that as a warning for analyzer steps that explicitly report incomplete data.
 
 ## Manual Pipeline
 
@@ -251,6 +243,46 @@ Common options include:
 - `--md-out path/to/report.md`
 
 Use `--help` on any analyzer for exact options.
+
+## Health Checks
+
+Run pre-flight health checks:
+
+```bash
+python -m chaos_observatory.health.run_healthcheck
+```
+
+Emit health checks as JSON:
+
+```bash
+python -m chaos_observatory.health.run_healthcheck --json
+python scripts/print_health.py
+```
+
+The health layer checks expected configuration, database readiness, ingest paths, ML importability, and report paths.
+
+## Database Layer
+
+`storage/schema.sql` defines a SQLite-first schema for:
+
+- pipeline runs
+- sources
+- raw items
+- normalized documents
+- analysis results
+- optional FTS5 document search
+
+`storage/db.py` provides helper methods for schema initialization, run tracking, source upserts, raw item storage, normalized document storage, document-window queries, and analysis result storage.
+
+Import normalized JSONL partitions into SQLite for ML workflows:
+
+```bash
+python scripts/import_normalized_to_db.py \
+  --in data/normalized \
+  --db storage/chaos.db
+```
+
+The JSONL pipeline is still the main runtime path. SQLite is available for persistence, document-window queries, and ML workflows that need stable document storage.
 
 ## ML Components
 
@@ -320,21 +352,6 @@ Expected input fields:
 - `text`
 - `published_at`
 
-## Database Layer
-
-`storage/schema.sql` defines a SQLite-first schema for:
-
-- pipeline runs
-- sources
-- raw items
-- normalized documents
-- analysis results
-- optional FTS5 document search
-
-`storage/db.py` provides helper methods for schema initialization, run tracking, source upserts, raw item storage, normalized document storage, and analysis result storage.
-
-The JSONL pipeline is still the main runtime path. The SQLite layer is available for the ML and persistence build-out.
-
 ## Retention
 
 Retention is dry-run by default.
@@ -382,9 +399,10 @@ pytest
 
 Current coverage includes:
 
-- source loading
-- RSS item shaping
+- source loading and RSS item shaping
 - normalization
+- health checks
+- database document-window queries
 - ML change detection helpers
 - ML topic convergence database loading
 - embedding text construction
@@ -396,10 +414,24 @@ Current coverage includes:
 Useful validation commands:
 
 ```bash
-python -m py_compile ml/*.py
+python -m py_compile analyze/*.py ingest/*.py ml/*.py report/*.py storage/*.py
 python -m pytest
 python -c "import ml; import ml.ml_change_detection; import ml.ml_topic_convergence; import ml.ml_embeddings; import ml.ml_evaluation; import ml.ml_semantic_linker; import ml.ml_sentiment_shift; import ml.ml_similarity_thresholds; import ml.vector_store; print('all-ml-imports-ok')"
 ```
+
+## Security And Pre-Commit
+
+The repository includes pre-commit and scan artifacts:
+
+- `.pre-commit-config.yaml`
+- `.secrets.baseline`
+- `scan-bandit.json`
+- `scan-pip-audit.json`
+- `scan-safety.json`
+- `scan-trufflehog.json`
+- `trufflehog-results.json`
+
+The current pre-commit file points at local virtual-environment executables. Check those paths before relying on hooks across operating systems.
 
 ## Operational Notes
 
